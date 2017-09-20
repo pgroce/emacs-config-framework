@@ -20,7 +20,10 @@ tangle:
 	--visit=emacs-config-framework.org \
 	--eval "(progn (require 'ob) (cd \"build\") (org-babel-tangle nil))"
 
+
 install: tangle
-	cp build/*.el $(EMACS_HOME)
-	rm -rf $(EMACS_HOME)/config
-	cp -rf build/config $(EMACS_HOME)
+	@echo "This will annihilate your ~/.emacs.d/init.el! RUN THIS CAREFULLY"
+	@echo "To install, run the following:"
+	@echo cp build/*.el $(EMACS_HOME)
+	@echo rm -rf $(EMACS_HOME)/config
+	@echo cp -rf build/config $(EMACS_HOME)
