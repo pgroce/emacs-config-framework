@@ -7,6 +7,14 @@ This isn't the greatest configuration in the world. This is just a framework. ht
 
 This framework introduces a little bit of structure to an Emacs configuration. It doesn't actually configure Emacs, but it introduces conventions that make it easier to split your Emacs configuration up, reuse it on multiple machines, and test changes non-destructively.
 
+* Installation
+
+To install, clone the repository and run =make install= in the repo.
+
+You will need the Emacs you want to install to in your path. If you want to specify the copy of Emacs to use explicitly, you will need to modify the Makefile, or create a file called =localvars.mk= containing the path to Emacs in the variable =EMACS=.
+
+=make install= doesn't actually install the configuration, because they may blow away Emacs configuration you care about. Instead, it generates commands you can copy/paste into a terminal to install. If you care about the contents of your =init.el=, /back it up before running these commands/.
+
 * Features
 
 ** Multiple configuration directories
