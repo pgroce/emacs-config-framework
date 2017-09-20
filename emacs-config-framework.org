@@ -3,6 +3,10 @@
 
 This isn't the greatest configuration in the world. This is just a framework. https://www.youtube.com/watch?v=_lK4cX5xGiQ.
 
+* What is this? Why should I care?
+
+This framework introduces a little bit of structure to an Emacs configuration. It doesn't actually configure Emacs, but it introduces conventions that make it easier to split your Emacs configuration up, reuse it on multiple machines, and test changes non-destructively.
+
 * Features
 
 ** Multiple configuration directories
