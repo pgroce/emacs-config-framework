@@ -9,7 +9,7 @@ This framework introduces a little bit of structure to an Emacs configuration. I
 
 * Installation
 
-To install, clone the repository and run =make install= in the repo.
+To install, clone the repository and run =make install= in the repo. Or heck, copy/paste directly from this file; it's virtually no code at all.
 
 You will need the Emacs you want to install to in your path. If you want to specify the copy of Emacs to use explicitly, you will need to modify the Makefile, or create a file called =localvars.mk= containing the path to Emacs in the variable =EMACS=.
 
