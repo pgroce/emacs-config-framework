@@ -81,11 +81,15 @@ When debugging a configuration, setting this variable will tell the configuratio
 
 =init.el= simply figures out which configuration it should use, makes a note of it, and hand off control.
 
+We set =package-user-dir= to a directory inside =ecfw-config-dir= so configurations don't share packages by default. Individual configurations can, of course, set it to whatever they please.
+
 #+BEGIN_SRC emacs-lisp :tangle init.el
   (defconst ecfw-config-dir
     (expand-file-name (or (getenv "EMACS_CONFIG_DIR") "config")
                       user-emacs-directory)
     "The directory containing the Emacs configuration read by init.el.")
+
+  (setq package-user-dir (expand-file-name "elpa/" efcw-config-dir))
 
   (load-file (expand-file-name "init.el" ecfw-config-dir))
 #+END_SRC
