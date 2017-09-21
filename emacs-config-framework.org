@@ -87,7 +87,7 @@ When debugging a configuration, setting this variable will tell the configuratio
                       user-emacs-directory)
     "The directory containing the Emacs configuration read by init.el.")
 
-  (load-file (concat ecfw-config-dir "/emacs-init.el"))
+  (load-file (expand-file-name "init.el" ecfw-config-dir))
 #+END_SRC
 
 * Default Configuration
@@ -123,11 +123,11 @@ This file executes the general
 
 
   ;;; Load platform configuration files
-  (let* ((general-config find-config "emacs-config"))
+  (let* ((general-config (ecfw-find-config "emacs-config"))
          (platform (replace-regexp-in-string "/" "_" (symbol-name system-type)))
-         (platform-config find-config platform))
-         (host-config find-config (system-name)))
-         (user-config find-config (user-login-name))))
+         (platform-config (ecfw-find-config platform))
+         (host-config (ecfw-find-config (system-name)))
+         (user-config (ecfw-find-config (user-login-name))))
     (when general-config
       (neral-config))
     (when platform-config
@@ -138,5 +138,5 @@ This file executes the general
       (er-config)))
 
   ;;; Load scratch.el
-  (cfw--config-file "scratch.el"))
+  (load-file (ecfw--config-file "scratch.el"))
 #+end_src
