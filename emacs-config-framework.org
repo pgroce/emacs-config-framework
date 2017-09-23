@@ -89,7 +89,7 @@ We set =package-user-dir= to a directory inside =ecfw-config-dir= so configurati
                       user-emacs-directory)
     "The directory containing the Emacs configuration read by init.el.")
 
-  (setq package-user-dir (expand-file-name "elpa/" efcw-config-dir))
+  (setq package-user-dir (expand-file-name "elpa/" ecfw-config-dir))
 
   (load-file (expand-file-name "init.el" ecfw-config-dir))
 #+END_SRC
