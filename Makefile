@@ -56,12 +56,12 @@ install: tangle
 update: tangle
 	@echo ""
 	@echo "'make update' will:"
-	@echo "DESTRUCTIVELY replace $(EMACS_HOME)/init.el"
-	@echo "REPLACE $(EMACS_HOME)/config if it exists"
-	@echo "Install/replace $(EMACS_HOME)/config_default"
+	@echo "REPLACE $(EMACS_HOME)/init.el"
+	@echo "REPLACE $(EMACS_HOME)/config/init.el if it exists"
+	@echo "Replace $(EMACS_HOME)/config_default"
 	@echo ""
 	install build/init.el $(EMACS_HOME)/
-	rm -rf $(EMACS_HOME)/config
-	cp -rf build/config $(EMACS_HOME)
+	mkdir -p $(EMACS_HOME)/config
+	cp -f build/config/init.el $(EMACS_HOME)/config/
 	rm -rf $(EMACS_HOME)/config_default
 	cp -rf build/config $(EMACS_HOME)/config_default
