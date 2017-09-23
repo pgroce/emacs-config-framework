@@ -1,5 +1,3 @@
-
-
 # If (the right) Emacs isn't in your path, define the variable EMACS
 # in localvars.mk.  e.g.
 # EMACS="/Applications/Emacs.app/Contents/MacOS/Emacs"
