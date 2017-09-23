@@ -133,13 +133,13 @@ This file executes the general
          (host-config (ecfw-find-config (system-name)))
          (user-config (ecfw-find-config (user-login-name))))
     (when general-config
-      (neral-config))
+      (general-config))
     (when platform-config
-      (atform-config))
+      (platform-config))
     (when host-config
-      (st-config))
+      (host-config))
     (when user-config
-      (er-config)))
+      (user-config)))
 
   ;;; Load scratch.el
   (load-file (ecfw--config-file "scratch.el"))
