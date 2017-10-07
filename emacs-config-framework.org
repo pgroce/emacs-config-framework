@@ -114,7 +114,7 @@ This file executes the general
       (if (file-readable-p dot-el)
           dot-el
         (progn
-          (warn "Couldn't find config file '%s'" dot-el)
+          (message "NOTE: Couldn't find config file '%s'" dot-el)
           nil))))
 
   (defun ecfw-load-config (fname)
