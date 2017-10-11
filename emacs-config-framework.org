@@ -53,7 +53,6 @@ Note that machines that change networks (e.g., laptops) may not reliably have th
 
 The user-specific configuration file (or "user file") is the string returned by the =user-login-name= function, plus the file suffix. For the user =jdoe=, this file would be =jdoe.el=.
 
-
 ** The scratch file
 
 By default, Emacs starts with a =\*scratch\*= buffer. This buffer is in fundamental mode, so the user can run elisp in it. However, nothing in =\*scratch\*= is saved to disk.
@@ -96,8 +95,6 @@ We set =package-user-dir= to a directory inside =ecfw-config-dir= so configurati
 
 * Default Configuration
 The remainder of this configuration is put in the default location, =~/.emacs.d/config/=. If you want to reuse this framework in other configurations, you can copy it from there before customizing the default configuration. (Alternately, you can copy =config= somewhere else and use =EMACS_CONFIG_DIR= to make /that/ your default configuration.)
-
-This file executes the general
 
 #+BEGIN_SRC emacs-lisp :tangle (prog1 "config/init.el" (make-directory "config" "."))
   (eval-when-compile (require 'subr-x))
