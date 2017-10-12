@@ -111,7 +111,7 @@ The remainder of this configuration is put in the default location, =~/.emacs.d/
       (if (file-readable-p dot-el)
           dot-el
         (progn
-          (warn "Couldn't find config file '%s'" dot-el)
+          (message "NOTE: Couldn't find config file '%s'" dot-el)
           nil))))
 
   (defun ecfw-load-config (fname)
