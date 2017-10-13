@@ -184,7 +184,7 @@ We require the =url= package.
 The low-level interface to the proxy testing code. =ecfw-proxy-works-p= simply returns true if it can get to the requested URL via the requested proxy.
 
 #+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
-  (defun ecfw--proxy-works-p (proxy-services test-url)
+  (defun ecfw-proxy--works-p (proxy-services test-url)
     (let* ((url-proxy-services proxy-services)
            ;; url-retrieve (well, open-network-stream) will error if it
            ;; can't find the proxy; this is the most likely outcome if
@@ -193,19 +193,20 @@ The low-level interface to the proxy testing code. =ecfw-proxy-works-p= simply r
                        (url-retrieve-synchronously test-url t)
                      (error nil))))
       (if buffer
-          (let (rc)
-            (with-current-buffer buffer
-              (goto-char (point-min))
-              (if (re-search-forward
-                   "^HTTP/[0-9]\\.[0-9] \\([0-9]\\{3\\}\\)"
-                   nil
-                   t)
-                  (let ((code (string-to-number (match-string 1))))
-                    (if (= 200 code)
-                        (setq rc t)
-                      (setq rc nil)))
-                (setq rc  nil)))
-            rc)
+          (progn
+            (let (rc)
+              (with-current-buffer buffer
+                (goto-char (point-min))
+                (if (re-search-forward
+                     "^HTTP/[0-9]\\.[0-9] \\([0-9]\\{3\\}\\)"
+                     nil
+                     t)
+                    (let ((code (string-to-number (match-string 1))))
+                      (if (= 200 code)
+                          (setq rc t)
+                        (setq rc nil)))
+                  (setq rc  nil)))
+              rc))
         nil)))
 
   (defun ecfw-proxy-works-p (proxy test-url)
@@ -217,7 +218,43 @@ The low-level interface to the proxy testing code. =ecfw-proxy-works-p= simply r
 
   TEST-URL is a URL which should be accessible through the proxy if
   it exists and is configured correctly."
-    (ecfw--proxy-works-p `(,proxy) test-url))
+   (ecfw-proxy--works-p `(,proxy) test-url))
+#+END_SRC
+
+*** Setting the proxy
+
+Setting =url-proxy-services= gets us 80% of the way there, but for full compatibility, we need to add the traditional environment variables so any subprocesses we may call behave appropriately.
+
+#+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
+  (defun ecfw-proxy--set (url-proxy-services-list)
+    "Configures proxy settings based on URL-PROXY-ENTRY
+
+  URL-PROXY-ENTRY. is a list formatted as the value of
+  `url-proxy-services'."
+    (let ((envars nil))
+      ;; Make a list of the environment variables we want to set. (Don't
+      ;; set them as we go in case there's an error in input.)
+      (cl-dolist (proxy-rec url-proxy-services-list)
+        (cl-destructuring-bind (key value)
+            proxy-rec
+          (when (not (stringp key))
+            (error "Format error in %s: First value not a string" proxy-rec))
+          (when (not (stringp value))
+            (error "Format error in %s: Second value not a string" proxy-rec))
+
+          (if (string= key "no_proxy")
+              (progn
+                (add-to-list envars `(,"no_proxy" ,value))
+                (add-to-list envars `(,"NO_PROXY" ,value)))
+            (progn
+              (add-to-list envars
+                           `(,(format "%s_proxy" (downcase key)) ,value))
+              (add-to-list envars
+                           `(,(format "%s_PROXY" (upcase key)) ,value))))))
+      ;; Set the envars and url-proxy-services
+      (cl-dolist (envar envars)
+        (cl-destructuring-bind (key value) (setenv key value)))
+      (setq url-proxy-services url-proxy-services-list)))
 #+END_SRC
 
 *** The proxy file
@@ -226,7 +263,7 @@ Information about the various proxies that might be used are stored in
 a file. The user defines the location of this file.
 
 #+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
-  (defun ecfw--read-proxies-file (filename)
+  (defun ecfw-proxy--read-file (filename)
     (with-temp-buffer
     (insert-file-contents filename)
     (goto-char (point-min))
@@ -242,7 +279,7 @@ a file. The user defines the location of this file.
            nil
            (\"http://www.example.com\"
             \"http://webmail.example.com\"))
-     (school http
+     (school \"http\"
              \"proxy.university.edu:8080\"
              \"university.edu,foo.org\"
              (\"http://www.moogle.org\"
@@ -276,36 +313,92 @@ a file. The user defines the location of this file.
 
 *** Autoconfiguration
 
+Autoconfiguration is mainly here to be called non-interactively at the beginning of an Emacs configuration, but it seems like it would be useful to call when changing network environments, so it's also an interactive command.
+
 #+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
-  (defun ecfw--proxy-autoconf (proxies-raw)
+  (defun ecfw-proxy--autoconf (proxies-raw)
     (let ((final-proxies nil))
-      (cl-dolist (proxy-rec proxies-raw final-proxies)
-        (cl-destructuring-bind (label service addr no-proxy test-urls) proxy-rec
-          (let* ((services-rec `(,service . ,addr))
-                 (proxy-works-p (lambda (test-url)
-                                  (ecfw-proxy-works-p services-rec test-url))))
-            (when (and (not (eq test-urls nil))
-                       (cl-every proxy-works-p test-urls))
-              (add-to-list 'final-proxies services-rec)
-              (when no-proxy
-                (add-to-list 'final-proxies `("no_proxy" . ,no-proxy)))))))
+      (cl-dolist (proxy-group proxies-raw)
+        (cl-destructuring-bind (label no-proxy proxies) proxy-group
+          (cl-dolist (proxy-rec proxies)
+            (cl-destructuring-bind (service addr test-urls) proxy-rec
+              (let* ((service-rec `(,service . ,addr))
+                     (proxy-works-p (lambda (test-url)
+                                      (ecfw-proxy-works-p service-rec test-url))))
+                (when (and (not (eq test-urls nil))
+                           (pg/spy (cl-every proxy-works-p test-urls)))
+                  (add-to-list 'final-proxies service-rec)))))
+          (when (< 0 (length final-proxies))
+            ;; This proxy group appears to have connected. Add no_proxy
+            ;; if necessary and break out.
+            (when no-proxy
+              (add-to-list 'final-proxies `("no_proxy" . ,no-proxy)))
+            (return))))
       final-proxies))
+
 
 
   (defun ecfw-proxy-autoconf (&optional proxies-file-name)
     "Autoconfigure Emacs to use any usable proxies.
 
-  PROXIES-FILE-NAME is the name of the file containing proxy configuration information. If it is not supplied, the value of `ecfw-proxy-file' will be used.
+  PROXIES-FILE-NAME is the name of the file containing proxy
+  configuration information. If it is not supplied, the value of
+  `ecfw-proxy-file' will be used. (For the format of
+  PROXIES-FILE-NAME, see the documentation for `ecfw-proxy-file'.)
 
-  For the format of PROXIES-FILE-NAME, see the documentation for `ecfw-proxy-file'."
-    (let ((proxies-file-name (if (eq nil proxies-file-name)
-                                 ecfw-proxy-file
-                               proxies-file-name)))
+  If called interactively, this command ignores its prefix argument
+  and uses `ecfw-proxy-file' for its proxies. If that variable is
+  not configured or points to a non-existant file, this command has
+  no effect."
+    (interactive)
+    (let ((proxies-file-name (if (stringp proxies-file-name)
+                                 proxies-file-name
+                               ecfw-proxy-file)))
       (when (and proxies-file-name
                  (file-exists-p proxies-file-name))
-        (setq url-proxy-services
-              (ecfw--proxy-autoconf
-               (ecfw--read-proxies-file proxies-file-name))))))
+        (ecfw-proxy--set
+         (ecfw-proxy--autoconf
+          (ecfw-proxy--read-file proxies-file-name))))))
+#+END_SRC
+
+*** Proxy selection
+
+It's sometimes nice to manually set the proxy, as when troubleshooting. If the proxy is listed in the proxies file, =ecfw-proxy-set= simplifies this somewhat.
+
+#+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
+  (defun ecfw-proxy-switch (&optional proxy-file-name)
+    "Convert PROXY-FILE-NAME into a list of proxy options.
+
+  If PROXY-FILE-NAME is not supplied, use the value of `ecfw-proxy-file'."
+    (let (proxy-file-name (if proxy-file-name
+                              proxy-file-name
+                            ecfw-proxy-file))
+      (if proxy-file-name
+          (progn
+            (let* ((proxies-raw (ecfw-proxy--read-file "test-proxies"))
+                   (proxy-group
+                    (assoc
+                     (intern (completing-read "Which proxy? " proxies-raw))
+                     proxies-raw)))
+              (cl-destructuring-bind (label no-proxy proxies) proxy-group
+                (let ((vals nil))
+                  (cl-dolist (proxy proxies)
+                    (cl-destructuring-bind (service addr tests) proxy
+                      (add-to-list 'vals `(,service ,addr))))
+                  (when no-proxy
+                    (add-to-list vals `("no_proxy" ,no-proxy)))
+                  (ecfw-proxy--set vals)))))
+        (progn
+          (message "Configure proxy file in ecfw-proxy-file to switch proxies.")
+          nil))))
+
+
+  (let* ((proxies-raw (ecfw-proxy--read-file "test-proxies"))
+         (choice (assoc
+                  (intern (completing-read "Which one? " proxies-raw))
+                  proxies-raw)))
+    choice)
+
 #+END_SRC
 
 ** Provides
