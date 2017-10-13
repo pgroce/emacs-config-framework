@@ -8,7 +8,7 @@ This framework introduces a little bit of structure to an Emacs configuration. I
 Installation
 ============
 
-To install, clone the repository and run `make install` in the repo.
+To install, clone the repository and run `make install` in the repo. Or heck, copy/paste directly from this file; it's virtually no code at all.
 
 You will need the Emacs you want to install to in your path. If you want to specify the copy of Emacs to use explicitly, you will need to modify the Makefile, or create a file called `localvars.mk` containing the path to Emacs in the variable `EMACS`.
 
@@ -64,6 +64,19 @@ This configuration replaces the `\*scratch\*` buffer with a file, `scratch.el`. 
 
 `scratch.el` is nice for keeping one's configuration tidy while still trying out new things. Users can put experimental changes in the `scratch.el` buffer and try them out interactively (e.g., with `eval-last-sexp`). If they want to keep the changess around for a while, they can save them to `scratch.el` and the changes will persist on restart. If they don't like a change, it's easy to remove from `scratch.el`. Otherwise, they can think about putting it in a sensible spot in their "real config".
 
+Bonus: Proxy configuration
+--------------------------
+
+This framework provides some functions to deal with a very specific, but irritating problem: Initializing a package-heavy Emacs configuration on a machine that may be behind one of a few proxies (or unproxied). Emacs often needs to know this before it can load packages successfully.
+
+Use of this code is optional, so if you don't have this problem, it will stay out of your way.
+
+The code for proxy autoconfiguration is at the end of this document, in *Appendix 1: Proxy configuration functions*. It is output in a separate file, `ecfw-proxy.el`.
+
+``` commonlisp
+(require 'ecfw-proxy)
+```
+
 Environment variables
 =====================
 
@@ -86,21 +99,23 @@ Initialization
 
 `init.el` simply figures out which configuration it should use, makes a note of it, and hand off control.
 
+We set `package-user-dir` to a directory inside `ecfw-config-dir` so configurations don't share packages by default. Individual configurations can, of course, set it to whatever they please.
+
 ``` commonlisp
 (defconst ecfw-config-dir
   (expand-file-name (or (getenv "EMACS_CONFIG_DIR") "config")
                     user-emacs-directory)
   "The directory containing the Emacs configuration read by init.el.")
 
-(load-file (concat ecfw-config-dir "/emacs-init.el"))
+(setq package-user-dir (expand-file-name "elpa/" ecfw-config-dir))
+
+(load-file (expand-file-name "init.el" ecfw-config-dir))
 ```
 
 Default Configuration
 =====================
 
 The remainder of this configuration is put in the default location, `~/.emacs.d/config/`. If you want to reuse this framework in other configurations, you can copy it from there before customizing the default configuration. (Alternately, you can copy `config` somewhere else and use `EMACS_CONFIG_DIR` to make *that* your default configuration.)
-
-This file executes the general
 
     (eval-when-compile (require 'subr-x))
 
@@ -116,7 +131,7 @@ This file executes the general
         (if (file-readable-p dot-el)
             dot-el
           (progn
-            (warn "Couldn't find config file '%s'" dot-el)
+            (message "NOTE: Couldn't find config file '%s'" dot-el)
             nil))))
 
     (defun ecfw-load-config (fname)
@@ -129,20 +144,143 @@ This file executes the general
 
 
     ;;; Load platform configuration files
-    (let* ((general-config find-config "emacs-config"))
+    (let* ((general-config (ecfw-find-config "emacs-config"))
            (platform (replace-regexp-in-string "/" "_" (symbol-name system-type)))
-           (platform-config find-config platform))
-           (host-config find-config (system-name)))
-           (user-config find-config (user-login-name))))
+           (platform-config (ecfw-find-config platform))
+           (host-config (ecfw-find-config (system-name)))
+           (user-config (ecfw-find-config (user-login-name))))
       (when general-config
-        (neral-config))
+        (load-file general-config))
       (when platform-config
-        (atform-config))
+        (load-file platform-config))
       (when host-config
-        (st-config))
+        (load-file host-config))
       (when user-config
-        (er-config)))
+        (load-file user-config)))
 
     ;;; Load scratch.el
-    (cfw--config-file "scratch.el"))
+    (load-file (ecfw--config-file "scratch.el"))
 
+Appendix 1: Proxy configuration functions
+=========================================
+
+The framework provides some functionality for automatically assessing which proxy it is behind and configuring accordingly.
+
+``` commonlisp
+;;; ecfw-proxy.el --- Proxy autoconfiguration
+
+;; Copyright (C) 2017 Phil Groce
+
+;; Author: Phil Groce <pgroce@gmail.com>
+;; Version: 0.1
+;; Keywords: network proxies
+
+(require 'url)
+
+(defun ecfw--proxy-works-p (proxy-services test-url)
+  (let* ((url-proxy-services proxy-services)
+         ;; url-retrieve (well, open-network-stream) will error if it
+         ;; can't find the proxy; this is the most likely outcome if
+         ;; we're not testing the right proxy
+         (buffer (condition-case nil
+                     (url-retrieve-synchronously test-url t)
+                   (error nil))))
+    (if buffer
+        (let (rc)
+          (with-current-buffer buffer
+            (goto-char (point-min))
+            (if (re-search-forward
+                 "^HTTP/[0-9]\\.[0-9] \\([0-9]\\{3\\}\\)"
+                 nil
+                 t)
+                (let ((code (string-to-number (match-string 1))))
+                  (if (= 200 code)
+                      (setq rc t)
+                    (setq rc nil)))
+              (setq rc  nil)))
+          rc)
+      nil)))
+
+(defun ecfw-proxy-works-p (proxy test-url)
+  "Predicate for testing if a proxy is usable.
+
+PROXY is a proxy entry formatted as a record in the
+`url-proxy-services' list of proxies. In other words, this is a
+cons cell of the form (\"service type\" . \"address:port\").
+
+TEST-URL is a URL which should be accessible through the proxy if
+it exists and is configured correctly."
+  (ecfw--proxy-works-p `(,proxy) test-url))
+
+
+(defun ecfw--read-proxies-file (filename)
+  (with-temp-buffer
+  (insert-file-contents filename)
+  (goto-char (point-min))
+  (read (current-buffer))))
+
+(defun ecfw--proxy-autoconf (proxies-raw)
+  (let ((final-proxies nil))
+    (cl-dolist (proxy-rec proxies-raw final-proxies)
+      (cl-destructuring-bind (label service addr no-proxy test-urls) proxy-rec
+        (let* ((services-rec `(,service . ,addr))
+               (proxy-works-p (lambda (test-url)
+                                (ecfw-proxy-works-p services-rec test-url))))
+          (when (and (not (eq test-urls nil))
+                     (cl-every proxy-works-p test-urls))
+            (add-to-list 'final-proxies services-rec)
+            (when no-proxy
+              (add-to-list 'final-proxies `("no_proxy" . ,no-proxy)))))))
+    final-proxies))
+
+
+
+
+
+(defun ecfw-proxy-autoconf (proxies-file-name)
+  "Autoconfigure Emacs to use any usable proxies in PROXIES-FILE-NAME.
+
+The format of PROXIES-FILE-NAME is an sexpr list of records. An example might look like this:
+
+  ((work \"http\"
+         \"proxy.example.com:1234\"
+         nil
+         (\"http://www.example.com\"
+          \"http://webmail.example.com\"))
+   (school http
+           \"proxy.university.edu:8080\"
+           \"university.edu,foo.org\"
+           (\"http://www.moogle.org\"
+            \"http://internet-websites.com\")))
+
+Each record consists of the following fields:
+
+  (label service proxy-addr no-proxy test-urls)
+
+The label is a symbol or string that you can use to identify the
+record quickly; it is ignored by the code.
+
+The service is one of the proxy services: \"http\", \"https\",
+\"ftp\", etc.
+
+The no-proxy string has the same format as the NO_PROXY
+environment variable, and specifies domains that should not be
+proxied. It is also not used in the code, but is passed into
+`url-proxy-services' unchanged.
+
+The test-urls are a set of URLs that should be reachable if this
+proxy is usable. If they are not reachable with the proxy
+configured, the proxy will not be used. If the list of test-urls
+is empty the proxy will never be used.
+
+Note that no entries are needed to configure an unproxied network
+connection; if none of the proxies are reachable Emacs will be
+configured not to use a proxy. If a proxy is reachable but you do
+not wish to use it, you should remove it from your proxies file."
+  (setq url-proxy-services
+        (ecfw--proxy-autoconf
+         (ecfw--read-proxies-file proxies-file-name))))
+
+(provide 'ecfw-proxy)
+;;; ecfw-proxy.el ends here
+```
