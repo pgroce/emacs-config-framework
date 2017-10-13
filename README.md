@@ -166,6 +166,9 @@ Appendix 1: Proxy configuration functions
 
 The framework provides some functionality for automatically assessing which proxy it is behind and configuring accordingly.
 
+Header
+------
+
 ``` commonlisp
 ;;; ecfw-proxy.el --- Proxy autoconfiguration
 
@@ -174,9 +177,25 @@ The framework provides some functionality for automatically assessing which prox
 ;; Author: Phil Groce <pgroce@gmail.com>
 ;; Version: 0.1
 ;; Keywords: network proxies
+```
 
+Requires
+--------
+
+We require the `url` package.
+
+``` commonlisp
 (require 'url)
+```
 
+Code
+----
+
+### Core proxy detection
+
+The low-level interface to the proxy testing code. `ecfw-proxy-works-p` simply returns true if it can get to the requested URL via the requested proxy.
+
+``` commonlisp
 (defun ecfw--proxy-works-p (proxy-services test-url)
   (let* ((url-proxy-services proxy-services)
          ;; url-retrieve (well, open-network-stream) will error if it
@@ -211,35 +230,22 @@ cons cell of the form (\"service type\" . \"address:port\").
 TEST-URL is a URL which should be accessible through the proxy if
 it exists and is configured correctly."
   (ecfw--proxy-works-p `(,proxy) test-url))
+```
 
+### The proxy file
 
+Information about the various proxies that might be used are stored in a file. The user defines the location of this file.
+
+``` commonlisp
 (defun ecfw--read-proxies-file (filename)
   (with-temp-buffer
   (insert-file-contents filename)
   (goto-char (point-min))
   (read (current-buffer))))
 
-(defun ecfw--proxy-autoconf (proxies-raw)
-  (let ((final-proxies nil))
-    (cl-dolist (proxy-rec proxies-raw final-proxies)
-      (cl-destructuring-bind (label service addr no-proxy test-urls) proxy-rec
-        (let* ((services-rec `(,service . ,addr))
-               (proxy-works-p (lambda (test-url)
-                                (ecfw-proxy-works-p services-rec test-url))))
-          (when (and (not (eq test-urls nil))
-                     (cl-every proxy-works-p test-urls))
-            (add-to-list 'final-proxies services-rec)
-            (when no-proxy
-              (add-to-list 'final-proxies `("no_proxy" . ,no-proxy)))))))
-    final-proxies))
-
-
-
-
-
-(defun ecfw-proxy-autoconf (proxies-file-name)
-  "Autoconfigure Emacs to use any usable proxies in PROXIES-FILE-NAME.
-
+(defcustom ecfw-proxy-file nil
+  "Full path to the file containing proxy information for
+  `ecfw-proxy-autoconf' and `ecfw-switch-proxy'.
 The format of PROXIES-FILE-NAME is an sexpr list of records. An example might look like this:
 
   ((work \"http\"
@@ -273,14 +279,50 @@ proxy is usable. If they are not reachable with the proxy
 configured, the proxy will not be used. If the list of test-urls
 is empty the proxy will never be used.
 
-Note that no entries are needed to configure an unproxied network
+Note that no entries need to be configured for an unproxied network
 connection; if none of the proxies are reachable Emacs will be
 configured not to use a proxy. If a proxy is reachable but you do
-not wish to use it, you should remove it from your proxies file."
-  (setq url-proxy-services
-        (ecfw--proxy-autoconf
-         (ecfw--read-proxies-file proxies-file-name))))
+not wish to use it, you should remove it from your proxies file.")
+```
 
+### Autoconfiguration
+
+``` commonlisp
+(defun ecfw--proxy-autoconf (proxies-raw)
+  (let ((final-proxies nil))
+    (cl-dolist (proxy-rec proxies-raw final-proxies)
+      (cl-destructuring-bind (label service addr no-proxy test-urls) proxy-rec
+        (let* ((services-rec `(,service . ,addr))
+               (proxy-works-p (lambda (test-url)
+                                (ecfw-proxy-works-p services-rec test-url))))
+          (when (and (not (eq test-urls nil))
+                     (cl-every proxy-works-p test-urls))
+            (add-to-list 'final-proxies services-rec)
+            (when no-proxy
+              (add-to-list 'final-proxies `("no_proxy" . ,no-proxy)))))))
+    final-proxies))
+
+
+(defun ecfw-proxy-autoconf (&optional proxies-file-name)
+  "Autoconfigure Emacs to use any usable proxies.
+
+PROXIES-FILE-NAME is the name of the file containing proxy configuration information. If it is not supplied, the value of `ecfw-proxy-file' will be used.
+
+For the format of PROXIES-FILE-NAME, see the documentation for `ecfw-proxy-file'."
+  (let ((proxies-file-name (if (eq nil proxies-file-name)
+                               ecfw-proxy-file
+                             proxies-file-name)))
+    (when (and proxies-file-name
+               (file-exists-p proxies-file-name))
+      (setq url-proxy-services
+            (ecfw--proxy-autoconf
+             (ecfw--read-proxies-file proxies-file-name))))))
+```
+
+Provides
+--------
+
+``` commonlisp
 (provide 'ecfw-proxy)
 ;;; ecfw-proxy.el ends here
 ```
