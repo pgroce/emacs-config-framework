@@ -69,10 +69,6 @@ Use of this code is optional, so if you don't have this problem, it will stay ou
 
 The code for proxy autoconfiguration is at the end of this document, in [[Appendix 1: Proxy configuration functions]]. It is output in a separate file, =ecfw-proxy.el=.
 
-#+BEGIN_SRC emacs-lisp :tangle init.el
-  (require 'ecfw-proxy)
-#+END_SRC
-
 * Environment variables
 
 This configuration permits the use of a few environment variables to change its behavior.
@@ -89,9 +85,13 @@ When debugging a configuration, setting this variable will tell the configuratio
 
 * Initialization
 
-=init.el= simply figures out which configuration it should use, makes a note of it, and hand off control.
+=init.el= mostly figures out which configuration it should use, makes a note of it, and hands off control.
 
-We set =package-user-dir= to a directory inside =ecfw-config-dir= so configurations don't share packages by default. Individual configurations can, of course, set it to whatever they please.
+The fiddly bits in between:
+
+ * Load =ecfw-proxy=.
+ * Set the following variables to contain them within =ecfw-config-dir=. (Individual configurations can, of course, set it to whatever they please.)
+   + =package-user-dir=, so configurations don't share packages by default.
 
 #+BEGIN_SRC emacs-lisp :tangle init.el
   (defconst ecfw-config-dir
@@ -99,8 +99,11 @@ We set =package-user-dir= to a directory inside =ecfw-config-dir= so configurati
                       user-emacs-directory)
     "The directory containing the Emacs configuration read by init.el.")
 
+  (require 'ecfw-proxy (expand-file-name "ecfw-proxy.el" user-emacs-directory))
+
   (setq package-user-dir (expand-file-name "elpa/" ecfw-config-dir))
 
+  (message "Loading configuration from %s" ecfw-config-dir)
   (load-file (expand-file-name "init.el" ecfw-config-dir))
 #+END_SRC
 
@@ -375,7 +378,7 @@ It's sometimes nice to manually set the proxy, as when troubleshooting. If the p
                             ecfw-proxy-file))
       (if proxy-file-name
           (progn
-            (let* ((proxies-raw (ecfw-proxy--read-file "test-proxies"))
+            (let* ((proxies-raw (ecfw-proxy--read-file proxy-file-name))
                    (proxy-group
                     (assoc
                      (intern (completing-read "Which proxy? " proxies-raw))
@@ -391,14 +394,6 @@ It's sometimes nice to manually set the proxy, as when troubleshooting. If the p
         (progn
           (message "Configure proxy file in ecfw-proxy-file to switch proxies.")
           nil))))
-
-
-  (let* ((proxies-raw (ecfw-proxy--read-file "test-proxies"))
-         (choice (assoc
-                  (intern (completing-read "Which one? " proxies-raw))
-                  proxies-raw)))
-    choice)
-
 #+END_SRC
 
 ** Provides
