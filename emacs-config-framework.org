@@ -394,7 +394,7 @@ Autoconfiguration is mainly here to be called non-interactively at the beginning
                      (proxy-works-p (lambda (test-url)
                                       (ecfw-proxy-works-p service-rec test-url))))
                 (when (and (not (eq test-urls nil))
-                           (pg/spy (cl-every proxy-works-p test-urls)))
+                           (cl-every proxy-works-p test-urls))
                   (add-to-list 'final-proxies service-rec)))))
           (when (< 0 (length final-proxies))
             ;; This proxy group appears to have connected. Add no_proxy
