@@ -92,6 +92,12 @@ The fiddly bits in between:
  * Load =ecfw-proxy=.
  * Set the following variables to contain them within =ecfw-config-dir=. (Individual configurations can, of course, set it to whatever they please.)
    + =package-user-dir=, so configurations don't share packages by default.
+   + =backup-directory-alist=, to contain backups.
+   + =url-configuration-directory=, where the =url= library parks its state.
+   + The [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Network-Security.html][Network Security Manager]]'s data file.
+   + Various Projectile files.
+   + [[https://github.com/sigma/pcache][pcache]], the Emacs persistent caching mechanism.
+   + The savehist file
 
 #+BEGIN_SRC emacs-lisp :tangle init.el
   (defconst ecfw-config-dir
@@ -101,7 +107,19 @@ The fiddly bits in between:
 
   (require 'ecfw-proxy (expand-file-name "ecfw-proxy.el" user-emacs-directory))
 
-  (setq package-user-dir (expand-file-name "elpa/" ecfw-config-dir))
+  ;; Contain state within config directory
+  (defmacro ecfw-root (fname)
+    `(expand-file-name ,fname ecfw-config-dir))
+
+  (setq nsm-settings-file (ecfw-root "network-security.data")
+        package-user-dir (ecfw-root "elpa")
+        backup-directory-alist '(("." . (ecfw-root "backup")))
+        url-configuration-directory (ecfw-root "url")
+        projectile-known-projects-file (ecfw-root "projectile-bookmarks.eld")
+        projectile-cache-file (ecfw-root "projectile.cache")
+        pcache-directory (ecfw-root "var/pcache/")
+        savehist-file (ecfw-root "tmp/savehist"))
+
 
   (message "Loading configuration from %s" ecfw-config-dir)
   (load-file (expand-file-name "init.el" ecfw-config-dir))
