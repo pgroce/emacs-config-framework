@@ -293,6 +293,38 @@ Setting =url-proxy-services= gets us 80% of the way there, but for full compatib
 Information about the various proxies that might be used are stored in
 a file. The user defines the location of this file.
 
+A proxy file looks like this:
+
+#+BEGIN_SRC emacs-lisp :tangle no
+  ((uni ".example.edu,.example-institute.org"
+        (("http"
+          "proxy.example.edu:8080"
+          ("http://www.google.com/index.html"))
+         ("https"
+          "proxy.example.edu:8080"
+          ("https://www.google.com/index.html"))))
+   (work ".internal.megacorp.com"
+         (("https"
+           "proxy.megacorp.com:1234"
+           ("http://www.google.com/index.html"))
+          ("https"
+           "proxy.megacorp.com:1234"
+           ("https://code.internal.megacorp.com/index.html")))))
+#+END_SRC
+
+As you can see, it's just a single lisp data structure. Each element in the list is a /proxy group/, which can be thought of as a discrete network location with several different services potentially proxied.
+
+Each proxy group has the following records:
+
+ * A label. This is a symbol, and can be used as a name to manually select proxies with =ecfw-proxy-select=.
+ * What not to proxy, expressed in the format of a =NO_PROXY= environment variable. If every domain should be proxied, this can be =nil=.
+ * A list of /proxies/. Each element in the proxy list should contain the following elements:
+   + The service being proxied, as a string. (This is the first element of a =url-proxy-services= entry.)
+   + The proxy to use. (This is the second element of a =url-proxy-services= entry.)
+   + A list of /test URLs/. =ecfw-proxy-autoconf= uses these to test whether it can connect through the proxy.
+
+Although the example only shows HTTP and HTTPS, it's possible to put any proxied services in that =url-proxy-services= can handle and =url-retrieve= can open. (Note that =ecfw-proxy= won't notice if you use test URLs from one service in an entry for another service, so don't do that.)
+
 #+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
   (defun ecfw-proxy--read-file (filename)
     (with-temp-buffer
@@ -305,18 +337,22 @@ a file. The user defines the location of this file.
     `ecfw-proxy-autoconf' and `ecfw-switch-proxy'.
   The format of PROXIES-FILE-NAME is an sexpr list of records. An example might look like this:
 
-    ((work \"http\"
-           \"proxy.example.com:1234\"
-           nil
-           (\"http://www.example.com\"
-            \"http://webmail.example.com\"))
-     (school \"http\"
-             \"proxy.university.edu:8080\"
-             \"university.edu,foo.org\"
-             (\"http://www.moogle.org\"
-              \"http://internet-websites.com\")))
+    ((uni \".example.edu,.example-institute.org\"
+          ((\"http\"
+            \"proxy.example.edu:8080\"
+            (\"http://www.google.com/index.html\"))
+           (\"https\"
+            \"proxy.example.edu:8080\"
+            (\"https://www.google.com/index.html\"))))
+     (work \".internal.megacorp.com\"
+           ((\"https\"
+             \"proxy.megacorp.com:1234\"
+             (\"http://www.google.com/index.html\"))
+            (\"https\"
+             \"proxy.megacorp.com:1234\"
+             (\"https://code.internal.megacorp.com/index.html\")))))
 
-  Each record consists of the following fields:
+   Each record consists of the following fields:
 
     (label service proxy-addr no-proxy test-urls)
 
