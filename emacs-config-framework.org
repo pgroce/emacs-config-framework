@@ -53,6 +53,12 @@ Note that machines that change networks (e.g., laptops) may not reliably have th
 
 The user-specific configuration file (or "user file") is the string returned by the =user-login-name= function, plus the file suffix. For the user =jdoe=, this file would be =jdoe.el=.
 
+*** Deferring execution
+
+Occasionally, the framework's configuration order will be inconvenient. You may want to check the environment for a tool in the main config, for example, but you need to wait for the platform-specific configuration to finish setting up the environment first.
+
+You can defer any code to the end of configuration (after the general, platform, host, and user configurations have run, but before running =scratch.el=) by wrapping your code in a call to the =ecfw-defer= macro. The macro puts the code in a hook that will run it after the rest of the configuration has run, so platform- and user-specific changes can be made first.
+
 ** The scratch file
 
 By default, Emacs starts with a =\*scratch\*= buffer. This buffer is in fundamental mode, so the user can run elisp in it. However, nothing in =\*scratch\*= is saved to disk.
@@ -155,6 +161,16 @@ The remainder of this configuration is put in the default location, =~/.emacs.d/
           (load-file fname))
       (message "Couldn't load %s" fname)))
 
+  (defcustom ecfw--deferral-hook nil
+    "Hook run after configuration is run (but before loading
+    scratch.el. Add to this hook with the `ecfw-defer' macro.)")
+
+  (defmacro ecfw-defer (&rest body)
+    "Defer execution of BODY until configuration files have run.
+
+  BODY will run after the general, platform, host and user
+  configurations have run, but before \"scratch.el\" is loaded."
+    `(add-hook 'ecfw--deferral-hook (lambda () ,@body)))
 
   ;;; Load platform configuration files
   (let* ((general-config (ecfw-find-config "emacs-config"))
@@ -170,6 +186,8 @@ The remainder of this configuration is put in the default location, =~/.emacs.d/
       (load-file host-config))
     (when user-config
       (load-file user-config)))
+
+  (run-hooks 'ecfw--deferral-hook)
 
   ;;; Load scratch.el
   (load-file (ecfw--config-file "scratch.el"))
