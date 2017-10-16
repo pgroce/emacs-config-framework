@@ -275,7 +275,7 @@ Setting =url-proxy-services= gets us 80% of the way there, but for full compatib
       ;; Make a list of the environment variables we want to set. (Don't
       ;; set them as we go in case there's an error in input.)
       (cl-dolist (proxy-rec url-proxy-services-list)
-        (cl-destructuring-bind (key value)
+        (cl-destructuring-bind (key . value)
             proxy-rec
           (when (not (stringp key))
             (error "Format error in %s: First value not a string" proxy-rec))
@@ -284,16 +284,18 @@ Setting =url-proxy-services= gets us 80% of the way there, but for full compatib
 
           (if (string= key "no_proxy")
               (progn
-                (add-to-list envars `(,"no_proxy" ,value))
-                (add-to-list envars `(,"NO_PROXY" ,value)))
+                (add-to-list 'envars `(,"no_proxy" ,value))
+                (add-to-list 'envars `(,"NO_PROXY" ,value)))
             (progn
-              (add-to-list envars
+              (add-to-list 'envars
                            `(,(format "%s_proxy" (downcase key)) ,value))
-              (add-to-list envars
+              (add-to-list 'envars
                            `(,(format "%s_PROXY" (upcase key)) ,value))))))
       ;; Set the envars and url-proxy-services
       (cl-dolist (envar envars)
-        (cl-destructuring-bind (key value) (setenv key value)))
+        (cl-destructuring-bind (key value)
+            envar
+          (setenv key value)))
       (setq url-proxy-services url-proxy-services-list)))
 
   ;; TODO: This is clunky. Integrate with --set, by taking note of the
