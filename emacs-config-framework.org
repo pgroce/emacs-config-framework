@@ -484,7 +484,7 @@ It's sometimes nice to manually set the proxy, as when troubleshooting. If the p
           (message "Configure proxy file in ecfw-proxy-file to switch proxies.")
           nil))))
 
-  (defun ecfw-select-proxy (&optional arg)
+  (defun ecfw-proxy-select (&optional arg)
     "Select a proxy from the list of proxies in `ecfw-proxy-file'.
   If ARG is non-nil, configure for use without a proxy."
     (if arg
