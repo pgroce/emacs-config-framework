@@ -276,6 +276,16 @@ Setting =url-proxy-services= gets us 80% of the way there, but for full compatib
       (cl-dolist (envar envars)
         (cl-destructuring-bind (key value) (setenv key value)))
       (setq url-proxy-services url-proxy-services-list)))
+
+  ;; TODO: This is clunky. Integrate with --set, by taking note of the
+  ;; envars that would have been set from the previously value of
+  ;; `url-proxy-services' and unset them.
+  (defun ecfw-proxy--unset ()
+    "Configure for use without any proxy."
+    (cl-dolist (svc '("http" "https" "ftp"))
+      (setenv (concat (downcase svc) "_proxy") "")
+      (setenv (concat (upcase svc)   "_PROXY") "")
+      (setq url-proxy-services nil)))
 #+END_SRC
 
 *** The proxy file
@@ -412,6 +422,13 @@ It's sometimes nice to manually set the proxy, as when troubleshooting. If the p
         (progn
           (message "Configure proxy file in ecfw-proxy-file to switch proxies.")
           nil))))
+
+  (defun ecfw-select-proxy (&optional arg)
+    "Select a proxy from the list of proxies in `ecfw-proxy-file'.
+  If ARG is non-nil, configure for use without a proxy."
+    (if arg
+        (ecfw-proxy--unset)
+      (ecfw-proxy-switch)))
 #+END_SRC
 
 ** Provides
