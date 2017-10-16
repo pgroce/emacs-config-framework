@@ -115,17 +115,26 @@ The fiddly bits in between:
   (require 'ecfw-proxy (expand-file-name "ecfw-proxy.el" user-emacs-directory))
 
   ;; Contain state within config directory
-  (defmacro ecfw-root (fname)
+  (defmacro ecfw-root (fname &optional make-dir)
     `(expand-file-name ,fname ecfw-config-dir))
 
   (setq nsm-settings-file (ecfw-root "network-security.data")
         package-user-dir (ecfw-root "elpa")
-        backup-directory-alist '(("." . (ecfw-root "backup")))
+        backup-directory-alist `(("." . ,(ecfw-root "backup")))
         url-configuration-directory (ecfw-root "url")
         projectile-known-projects-file (ecfw-root "projectile-bookmarks.eld")
         projectile-cache-file (ecfw-root "projectile.cache")
-        pcache-directory (ecfw-root "var/pcache/")
-        savehist-file (ecfw-root "tmp/savehist"))
+        pcache-directory
+        (let ((dir (ecfw-root "var/pcache")))
+          (when (not (file-exists-p dir))
+            (make-directory dir t))
+          dir)
+        savehist-file
+        (let ((dir (ecfw-root "tmp")))
+          (when (not (file-exists-p dir))
+            (make-directory (ecfw-root "tmp")))
+          (ecfw-root "tmp/savehist")))
+
 
 
   (message "Loading configuration from %s" ecfw-config-dir)
