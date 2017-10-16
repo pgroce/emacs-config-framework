@@ -425,7 +425,7 @@ Autoconfiguration is mainly here to be called non-interactively at the beginning
             ;; if necessary and break out.
             (when no-proxy
               (add-to-list 'final-proxies `("no_proxy" . ,no-proxy)))
-            (return))))
+            (cl-return))))
       final-proxies))
 
 
