@@ -130,6 +130,8 @@ The fiddly bits in between:
 
   (message "Loading configuration from %s" ecfw-config-dir)
   (load-file (expand-file-name "init.el" ecfw-config-dir))
+
+
 #+END_SRC
 
 * Default Configuration
@@ -307,6 +309,8 @@ Setting =url-proxy-services= gets us 80% of the way there, but for full compatib
       (setenv (concat (downcase svc) "_proxy") "")
       (setenv (concat (upcase svc)   "_PROXY") "")
       (setq url-proxy-services nil)))
+
+
 #+END_SRC
 
 *** The proxy file
