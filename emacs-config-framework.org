@@ -137,7 +137,7 @@ The fiddly bits in between:
   (setq bookmark-default-file (ecfw-root "bookmarks")
         nsm-settings-file (ecfw-root "network-security.data")
         package-user-dir (ecfw-root "elpa")
-        backup-directory-alist `(("." . ,(ecfw-root "backup")))
+        backup-directory-alist `(("" . ,(ecfw-root "backup")))
         url-configuration-directory (ecfw-root "url")
         projectile-known-projects-file (ecfw-root "projectile-bookmarks.eld")
         projectile-cache-file (ecfw-root "projectile.cache")
