@@ -121,7 +121,6 @@ We need this so =package.el= won't automatically insert it later. ¯\_(ツ)_/¯
 
 The fiddly bits in between:
 
- * Load =ecfw-proxy=.
  * Set the following variables to contain them within =ecfw-config-dir=. (Individual configurations can, of course, set it to whatever they please.)
    + =package-user-dir=, so configurations don't share packages by default.
    + =backup-directory-alist=, to contain backups.
@@ -130,6 +129,7 @@ The fiddly bits in between:
    + Various Projectile files.
    + [[https://github.com/sigma/pcache][pcache]], the Emacs persistent caching mechanism.
    + The savehist file
+ * Load =ecfw-proxy=.
 
 #+BEGIN_SRC emacs-lisp :tangle init.el
   (require 'ecfw-proxy (expand-file-name "ecfw-proxy.el" user-emacs-directory))
