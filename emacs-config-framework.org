@@ -117,7 +117,7 @@ We need this so =package.el= won't automatically insert it later. ¯\_(ツ)_/¯
 
 ** Main startup
 
-=init.el= mostly figures out which configuration it should use, makes a note of it, and hands off control.
+=init.el= most importantly figures out which configuration it should use, makes a note of it, and hands off control.
 
 The fiddly bits in between:
 
