@@ -122,6 +122,7 @@ We need this so =package.el= won't automatically insert it later. ¯\_(ツ)_/¯
 The fiddly bits in between:
 
  * Set the following variables to contain them within =ecfw-config-dir=. (Individual configurations can, of course, set it to whatever they please.)
+   + =bookmarks=, for [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Bookmarks.html][Emacs bookmarks]].
    + =package-user-dir=, so configurations don't share packages by default.
    + =backup-directory-alist=, to contain backups.
    + =url-configuration-directory=, where the =url= library parks its state.
@@ -133,7 +134,8 @@ The fiddly bits in between:
 
 #+BEGIN_SRC emacs-lisp :tangle init.el
   ;; Contain state within config directory
-  (setq nsm-settings-file (ecfw-root "network-security.data")
+  (setq bookmark-default-file (ecfw-root "bookmarks")
+        nsm-settings-file (ecfw-root "network-security.data")
         package-user-dir (ecfw-root "elpa")
         backup-directory-alist `(("." . ,(ecfw-root "backup")))
         url-configuration-directory (ecfw-root "url")
