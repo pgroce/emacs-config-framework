@@ -223,9 +223,6 @@ The remainder of this configuration is put in the default location, =~/.emacs.d/
       (load-file host-config))
     (when user-config
       (load-file user-config)))
-
-
-
 #+end_src
 
 * Appendix 1: Proxy configuration functions
