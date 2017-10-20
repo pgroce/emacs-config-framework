@@ -132,8 +132,6 @@ The fiddly bits in between:
  * Load =ecfw-proxy=.
 
 #+BEGIN_SRC emacs-lisp :tangle init.el
-  (require 'ecfw-proxy (expand-file-name "ecfw-proxy.el" user-emacs-directory))
-
   ;; Contain state within config directory
   (setq nsm-settings-file (ecfw-root "network-security.data")
         package-user-dir (ecfw-root "elpa")
@@ -151,6 +149,8 @@ The fiddly bits in between:
           (when (not (file-exists-p dir))
             (make-directory (ecfw-root "tmp")))
           (ecfw-root "tmp/savehist")))
+
+  (require 'ecfw-proxy (expand-file-name "ecfw-proxy.el" user-emacs-directory))
 
   (message "Loading configuration from %s" ecfw-config-dir)
   (load-file (expand-file-name "init.el" ecfw-config-dir))
