@@ -497,9 +497,9 @@ It's sometimes nice to manually set the proxy, as when troubleshooting. If the p
     "Convert PROXY-FILE-NAME into a list of proxy options.
 
   If PROXY-FILE-NAME is not supplied, use the value of `ecfw-proxy-file'."
-    (let (proxy-file-name (if proxy-file-name
-                              proxy-file-name
-                            ecfw-proxy-file))
+    (let ((proxy-file-name (if proxy-file-name
+                               proxy-file-name
+                             ecfw-proxy-file)))
       (if proxy-file-name
           (progn
             (let* ((proxies-raw (ecfw-proxy--read-file proxy-file-name))
