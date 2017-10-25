@@ -315,9 +315,11 @@ Setting =url-proxy-services= gets us 80% of the way there, but for full compatib
         (cl-destructuring-bind (key . value)
             proxy-rec
           (when (not (stringp key))
-            (error "Format error in %s: First value not a string" proxy-rec))
+            (error "Format error in %s: First value (%s) not a string"
+                   proxy-rec key))
           (when (not (stringp value))
-            (error "Format error in %s: Second value not a string" proxy-rec))
+            (error "Format error in %s: Second value (%s) not a string"
+                   proxy-rec value))
 
           (if (string= key "no_proxy")
               (progn
@@ -511,9 +513,9 @@ It's sometimes nice to manually set the proxy, as when troubleshooting. If the p
                 (let ((vals nil))
                   (cl-dolist (proxy proxies)
                     (cl-destructuring-bind (service addr tests) proxy
-                      (add-to-list 'vals `(,service ,addr))))
+                      (add-to-list 'vals `(,service . ,addr))))
                   (when no-proxy
-                    (add-to-list vals `("no_proxy" ,no-proxy)))
+                    (add-to-list 'vals `("no_proxy" . ,no-proxy)))
                   (ecfw-proxy--set vals)))))
         (progn
           (message "Configure proxy file in ecfw-proxy-file to switch proxies.")
