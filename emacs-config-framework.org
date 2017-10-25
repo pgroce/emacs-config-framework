@@ -523,7 +523,6 @@ It's sometimes nice to manually set the proxy, as when troubleshooting. If the p
     "Select a proxy from the list of proxies in `ecfw-proxy-file'.
   If ARG is non-nil, configure for use without a proxy."
     (interactive "P")
-    (message "arg is %s" arg)
     (if arg
         (ecfw-proxy--unset)
       (ecfw-proxy-switch)))
