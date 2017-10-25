@@ -346,8 +346,6 @@ Setting =url-proxy-services= gets us 80% of the way there, but for full compatib
       (setenv (concat (downcase svc) "_proxy") "")
       (setenv (concat (upcase svc)   "_PROXY") "")
       (setq url-proxy-services nil)))
-
-
 #+END_SRC
 
 *** The proxy file
@@ -529,7 +527,6 @@ It's sometimes nice to manually set the proxy, as when troubleshooting. If the p
         (ecfw-proxy--unset)
       (ecfw-proxy-switch)))
 #+END_SRC
-
 ** Provides
 
 #+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
