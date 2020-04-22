@@ -38,8 +38,9 @@ Files are run in the following order:
 -   `~/.emacs.d/config/scratch.el` (Read *The scratch file*.)
 
 If you want to run out of a directory other than `config`, define a new
-name in the environment variable `EMACS_CONFIG_DIR`. By default, just
-leave it `config`. You're already using Emacs, you're weird enough.
+name in the environment variable `EMACS_CONFIG_DIR`. (It has to live in
+`~/emacs.d` though.)By default, just leave it `config`. You're already
+using Emacs, you're weird enough.
 
 If you want to try some weird new thing out or fix a bug in your config
 or whatever, do it in production! Write it out in `scratch.el` and
