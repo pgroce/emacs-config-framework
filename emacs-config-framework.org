@@ -7,6 +7,35 @@ This isn't the greatest configuration in the world. This is just a framework. ht
 
 This framework introduces a little bit of structure to an Emacs configuration. It doesn't actually configure Emacs, but it introduces conventions that make it easier to split your Emacs configuration up, reuse it on multiple machines, and test changes non-destructively.
 
+* For the Impatient
+
+** Installation
+
+#+BEGIN_SRC sh
+$ git clone https://github.com/pgroce/emacs-config-framework.git
+$ cd emacs-config-framework
+$ make install
+#+END_SRC
+
+** Configuration
+
+Files are run in the following order:
+
+- =~/.emacs.d/config/emacs-config.el=
+- =~/.emacs.d/config/darwin.el= (for MacOS. =gnu-linux.el= for Linux or LSFW, =windows.el= or something for Windows? Idk, I don't use it. Read [[*Platform-specific configuration][Platform-specific configuration]].)
+- =~/.emacs.d/config/your-host.el= (if your machine's =hostname= is =your-host=. Read  [[*Platform-, host-, and user-specific configuration][Platform-, host-, and user-specific configuration]].)
+- =~/.emacs.d/config/pgroce.el= (if your username is =pgroce=. Read  [[*Platform-, host-, and user-specific configuration][Platform-, host-, and user-specific configuration]].)
+- =~/.emacs.d/config/scratch.el= (Read [[*The scratch file][The scratch file]].)
+
+If you want to run out of a directory other than =config=, define a new name in the environment variable =EMACS_CONFIG_DIR=. By default, just leave it =config=. You're already using Emacs, you're weird enough.
+
+If you want to try some weird new thing out or fix a bug in your config or whatever, do it in production! Write it out in =scratch.el= and =eval= it. If it works, save =scratch.el= and it will be applied the next time you start up.
+
+If you want to be paranoid, copy your =config= directory to another directory in =~/.emacs.d/=, change =EMACS_CONFIG_DIR= to point to it, and start another copy of Emacs. It will take its config from that directory instead.
+
+When your =scratch.el= looks like a trasheap, move things into your "real" configuration files (=darwin.el= et al.) Use the =EMACS_CONFIG_DIR= trick above to keep your known-good config around and test that you haven't borked everything. (You've borked everything.) When you've fixed everything you borked, check it into version control somewhere, you animal.
+
+
 * Installation
 
 To install, clone the repository and run =make install= in the repo. Or heck, copy/paste directly from this file; it's virtually no code at all.

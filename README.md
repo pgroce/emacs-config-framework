@@ -1,18 +1,79 @@
-This isn't the greatest configuration in the world. This is just a framework. <https://www.youtube.com/watch?v=_lK4cX5xGiQ>.
+This isn't the greatest configuration in the world. This is just a
+framework. <https://www.youtube.com/watch?v=_lK4cX5xGiQ>.
 
 What is this? Why should I care?
 ================================
 
-This framework introduces a little bit of structure to an Emacs configuration. It doesn't actually configure Emacs, but it introduces conventions that make it easier to split your Emacs configuration up, reuse it on multiple machines, and test changes non-destructively.
+This framework introduces a little bit of structure to an Emacs
+configuration. It doesn't actually configure Emacs, but it introduces
+conventions that make it easier to split your Emacs configuration up,
+reuse it on multiple machines, and test changes non-destructively.
+
+For the Impatient
+=================
+
+Installation
+------------
+
+``` bash
+$ git clone https://github.com/pgroce/emacs-config-framework.git
+$ cd emacs-config-framework
+$ make install
+```
+
+Configuration
+-------------
+
+Files are run in the following order:
+
+-   `~/.emacs.d/config/emacs-config.el`
+-   `~/.emacs.d/config/darwin.el` (for MacOS. `gnu-linux.el` for Linux
+    or LSFW, `windows.el` or something for Windows? Idk, I don't use it.
+    Read *Platform-specific configuration*.)
+-   `~/.emacs.d/config/your-host.el` (if your machine's `hostname` is
+    `your-host`. Read *Platform-, host-, and user-specific
+    configuration*.)
+-   `~/.emacs.d/config/pgroce.el` (if your username is `pgroce`. Read
+    *Platform-, host-, and user-specific configuration*.)
+-   `~/.emacs.d/config/scratch.el` (Read *The scratch file*.)
+
+If you want to run out of a directory other than `config`, define a new
+name in the environment variable `EMACS_CONFIG_DIR`. By default, just
+leave it `config`. You're already using Emacs, you're weird enough.
+
+If you want to try some weird new thing out or fix a bug in your config
+or whatever, do it in production! Write it out in `scratch.el` and
+`eval` it. If it works, save `scratch.el` and it will be applied the
+next time you start up.
+
+If you want to be paranoid, copy your `config` directory to another
+directory in `~/.emacs.d/`, change `EMACS_CONFIG_DIR` to point to it,
+and start another copy of Emacs. It will take its config from that
+directory instead.
+
+When your `scratch.el` looks like a trasheap, move things into your
+"real" configuration files (`darwin.el` et al.) Use the
+`EMACS_CONFIG_DIR` trick above to keep your known-good config around and
+test that you haven't borked everything. (You've borked everything.)
+When you've fixed everything you borked, check it into version control
+somewhere, you animal.
 
 Installation
 ============
 
-To install, clone the repository and run `make install` in the repo. Or heck, copy/paste directly from this file; it's virtually no code at all.
+To install, clone the repository and run `make install` in the repo. Or
+heck, copy/paste directly from this file; it's virtually no code at all.
 
-You will need the Emacs you want to install to in your path. If you want to specify the copy of Emacs to use explicitly, you will need to modify the Makefile, or create a file called `localvars.mk` containing the path to Emacs in the variable `EMACS`.
+You will need the Emacs you want to install to in your path. If you want
+to specify the copy of Emacs to use explicitly, you will need to modify
+the Makefile, or create a file called `localvars.mk` containing the path
+to Emacs in the variable `EMACS`.
 
-`make install` doesn't actually install the configuration, because they may blow away Emacs configuration you care about. Instead, it generates commands you can copy/paste into a terminal to install. If you care about the contents of your `init.el`, *back it up before running these commands*.
+`make install` doesn't actually install the configuration, because they
+may blow away Emacs configuration you care about. Instead, it generates
+commands you can copy/paste into a terminal to install. If you care
+about the contents of your `init.el`, *back it up before running these
+commands*.
 
 Features
 ========
@@ -20,22 +81,43 @@ Features
 Multiple configuration directories
 ----------------------------------
 
-Configuration is stored in a directory in `emacs.d` (or whatever the user's `user-emacs-dir` is), so users can keep multiple configurations for multiple purposes. This can be very helpful for testing configuration changes, but this feature could be put to other uses, e.g. specialized configurations for different tasks or environments.
+Configuration is stored in a directory in `emacs.d` (or whatever the
+user's `user-emacs-dir` is), so users can keep multiple configurations
+for multiple purposes. This can be very helpful for testing
+configuration changes, but this feature could be put to other uses, e.g.
+specialized configurations for different tasks or environments.
 
-By default, Emacs will start the configuration located in `config`. To change it, specify a different configuration directory in the `EMACS_CONFIG_DIR` environment variable.
+By default, Emacs will start the configuration located in `config`. To
+change it, specify a different configuration directory in the
+`EMACS_CONFIG_DIR` environment variable.
 
 Platform-, host-, and user-specific configuration
 -------------------------------------------------
 
-The provided default configuration will look for a general configuration file. It will then load a file corresponding to the platform, followed by a file corresponding to the hostname, followed by a file corresponding to the username. If any of these files do not exist, they will be skipped and the configuration will look for the next file.
+The provided default configuration will look for a general configuration
+file. It will then load a file corresponding to the platform, followed
+by a file corresponding to the hostname, followed by a file
+corresponding to the username. If any of these files do not exist, they
+will be skipped and the configuration will look for the next file.
 
-This permits users to share the more generic parts of their configuration with multiple hosts or accounts, while still being able to easily add more specific or sensitive information in the environments where it's needed. For instance, a user may have their generic configuration in a repo on Github (possibly with platform-specific customizations); have user-specific configurations stored in source control on their corporate or home network; and have individual tweaks stored in host-specific files on different machines.
+This permits users to share the more generic parts of their
+configuration with multiple hosts or accounts, while still being able to
+easily add more specific or sensitive information in the environments
+where it's needed. For instance, a user may have their generic
+configuration in a repo on Github (possibly with platform-specific
+customizations); have user-specific configurations stored in source
+control on their corporate or home network; and have individual tweaks
+stored in host-specific files on different machines.
 
-All of the configuration files are optional; if a user wants to put all their configuration in one of them and ignore the rest, they can.
+All of the configuration files are optional; if a user wants to put all
+their configuration in one of them and ignore the rest, they can.
 
 ### Naming conventions
 
-All files are assumed to be within the top level of the configuration directory. (E.g., for a standard Emacs install using the default configuration, the general configuration file would be in `~/.emacs.d/config/emacs-config.el`.)
+All files are assumed to be within the top level of the configuration
+directory. (E.g., for a standard Emacs install using the default
+configuration, the general configuration file would be in
+`~/.emacs.d/config/emacs-config.el`.)
 
 1.  General configuration
 
@@ -43,63 +125,129 @@ All files are assumed to be within the top level of the configuration directory.
 
 2.  Platform-specific configuration
 
-    The platform-specific configuration file (or "platform file") is the return value of `system-type` as a string, with any slashes converted to underscores, plus the file suffix. On an OS X system, for instance, the configuration looks for `darwin.el`, while on Linux, the configuration looks for `gnu_linux.el`.
+    The platform-specific configuration file (or "platform file") is the
+    return value of `system-type` as a string, with any slashes
+    converted to underscores, plus the file suffix. On an OS X system,
+    for instance, the configuration looks for `darwin.el`, while on
+    Linux, the configuration looks for `gnu_linux.el`.
 
 3.  Host-specific configuration
 
-    The host-specific configuration file (or "host file") is the string returned by the `system-name` function, plus the file suffix. For a host named `foo.bar.baz`, for instance, the file would be `foo.bar.baz.el`.
+    The host-specific configuration file (or "host file") is the string
+    returned by the `system-name` function, plus the file suffix. For a
+    host named `foo.bar.baz`, for instance, the file would be
+    `foo.bar.baz.el`.
 
-    Note that machines that change networks (e.g., laptops) may not reliably have the same host name.
+    Note that machines that change networks (e.g., laptops) may not
+    reliably have the same host name.
 
 4.  User-specific configuration
 
-    The user-specific configuration file (or "user file") is the string returned by the `user-login-name` function, plus the file suffix. For the user `jdoe`, this file would be `jdoe.el`.
+    The user-specific configuration file (or "user file") is the string
+    returned by the `user-login-name` function, plus the file suffix.
+    For the user `jdoe`, this file would be `jdoe.el`.
+
+### Deferring execution
+
+Occasionally, the framework's configuration order will be inconvenient.
+You may want to check the environment for a tool in the main config, for
+example, but you need to wait for the platform-specific configuration to
+finish setting up the environment first.
+
+You can defer any code to the end of configuration (after the general,
+platform, host, and user configurations have run, but before running the
+scratch file) by wrapping your code in a call to the `ecfw-defer` macro.
+The macro puts the code in a hook that will run it after the rest of the
+configuration has run, so platform- and user-specific changes can be
+made first.
 
 The scratch file
 ----------------
 
-By default, Emacs starts with a `\*scratch\*` buffer. This buffer is in fundamental mode, so the user can run elisp in it. However, nothing in `\*scratch\*` is saved to disk.
+By default, Emacs starts with a `\*scratch\*` buffer. This buffer is in
+fundamental mode, so the user can run elisp in it. However, nothing in
+`\*scratch\*` is saved to disk.
 
-This configuration replaces the `\*scratch\*` buffer with a file, `scratch.el`. `scratch.el` is automatically loaded and, by default, is the first buffer visited, just like `\*scratch\*`. However, it is a first-class configuration file; on startup, `scratch.el` is loaded after all other configuration files. `scratch.el` is, thus, a persistent `\*scratch\*`.
+This configuration replaces the `\*scratch\*` buffer with a file,
+`scratch.el`. `scratch.el` is automatically loaded and, by default, is
+the first buffer visited, just like `\*scratch\*`. However, it is a
+first-class configuration file; on startup, `scratch.el` is loaded after
+all other configuration files. `scratch.el` is, thus, a persistent
+`\*scratch\*`.
 
-`scratch.el` is nice for keeping one's configuration tidy while still trying out new things. Users can put experimental changes in the `scratch.el` buffer and try them out interactively (e.g., with `eval-last-sexp`). If they want to keep the changess around for a while, they can save them to `scratch.el` and the changes will persist on restart. If they don't like a change, it's easy to remove from `scratch.el`. Otherwise, they can think about putting it in a sensible spot in their "real config".
+`scratch.el` is nice for keeping one's configuration tidy while still
+trying out new things. Users can put experimental changes in the
+`scratch.el` buffer and try them out interactively (e.g., with
+`eval-last-sexp`). If they want to keep the changess around for a while,
+they can save them to `scratch.el` and the changes will persist on
+restart. If they don't like a change, it's easy to remove from
+`scratch.el`. Otherwise, they can think about putting it in a sensible
+spot in their "real config".
+
+`scratch.el` runs after *everything*, even terminal configuration.
+Therefore, you can try things out in the `scratch.el` with
+`eval-last-sexp` and know that it will run that way when you restart
+Emacs. (Notwithstanding anything else you've `eval-last-sexp`'ed.)
 
 Bonus: Proxy configuration
 --------------------------
 
-This framework provides some functions to deal with a very specific, but irritating problem: Initializing a package-heavy Emacs configuration on a machine that may be behind one of a few proxies (or unproxied). Emacs often needs to know this before it can load packages successfully.
+This framework provides some functions to deal with a very specific, but
+irritating problem: Initializing a package-heavy Emacs configuration on
+a machine that may be behind one of a few proxies (or unproxied). Emacs
+often needs to know this before it can load packages successfully.
 
-Use of this code is optional, so if you don't have this problem, it will stay out of your way.
+Use of this code is optional, so if you don't have this problem, it will
+stay out of your way.
 
-The code for proxy autoconfiguration is at the end of this document, in *Appendix 1: Proxy configuration functions*. It is output in a separate file, `ecfw-proxy.el`.
-
-``` commonlisp
-(require 'ecfw-proxy)
-```
+The code for proxy autoconfiguration is at the end of this document, in
+*Appendix 1: Proxy configuration functions*. It is output in a separate
+file, `ecfw-proxy.el`.
 
 Environment variables
 =====================
 
-This configuration permits the use of a few environment variables to change its behavior.
+This configuration permits the use of a few environment variables to
+change its behavior.
 
 `EMACS_CONFIG_DIR`
 ------------------
 
-Controls which configuration (or sub-configuration, if you prefer) Emacs will use. Configurations are stored in directories in `~/.emacs.d`, and contain a file called `init.el`.
+Controls which configuration (or sub-configuration, if you prefer) Emacs
+will use. Configurations are stored in directories in `~/.emacs.d`, and
+contain a file called `init.el`.
 
-If this variable is not defined, Emacs will look for a configuration in `~/.emacs.d/config`.
+If this variable is not defined, Emacs will look for a configuration in
+`~/.emacs.d/config`.
 
 `EMACS_CONFIG_DEBUG`
 --------------------
 
-When debugging a configuration, setting this variable will tell the configuration to be more verbose in what it's doing. By default, this will set `use-package-verbose` to `t`. You may also use it to conditionally produce more output for debugging.
+When debugging a configuration, setting this variable will tell the
+configuration to be more verbose in what it's doing. By default, this
+will set `use-package-verbose` to `t`. You may also use it to
+conditionally produce more output for debugging.
 
-Initialization
-==============
+Configuration directory
+=======================
 
-`init.el` simply figures out which configuration it should use, makes a note of it, and hand off control.
+Boilerplate
+-----------
 
-We set `package-user-dir` to a directory inside `ecfw-config-dir` so configurations don't share packages by default. Individual configurations can, of course, set it to whatever they please.
+We need this so `package.el` won't automatically insert it later.
+¯\\<sub>(ツ)</sub>\_/¯
+
+``` commonlisp
+;(package-initialize)
+```
+
+Configuration root
+------------------
+
+`ecfw-config-dir` is the path to the directory containing the Emacs
+configuration. `ecfw-root` is a macro to shorten the process of defining
+a file location relative to `ecfw-config-dir`. (The name is purposely
+short so it can be inlined easily.)
 
 ``` commonlisp
 (defconst ecfw-config-dir
@@ -107,64 +255,149 @@ We set `package-user-dir` to a directory inside `ecfw-config-dir` so configurati
                     user-emacs-directory)
   "The directory containing the Emacs configuration read by init.el.")
 
-(setq package-user-dir (expand-file-name "elpa/" ecfw-config-dir))
+(defmacro ecfw-root (fname &optional make-dir)
+  `(expand-file-name ,fname ecfw-config-dir))
+```
 
+Main startup
+------------
+
+`init.el` most importantly figures out which configuration it should
+use, makes a note of it, and hands off control.
+
+The fiddly bits in between:
+
+-   Set the following variables to contain them within
+    `ecfw-config-dir`. (Individual configurations can, of course, set it
+    to whatever they please.)
+    -   `bookmarks`, for [Emacs
+        bookmarks](https://www.gnu.org/software/emacs/manual/html_node/emacs/Bookmarks.html).
+    -   `package-user-dir`, so configurations don't share packages by
+        default.
+    -   `backup-directory-alist`, to contain backups.
+    -   `url-configuration-directory`, where the `url` library parks its
+        state.
+    -   The [Network Security
+        Manager](https://www.gnu.org/software/emacs/manual/html_node/emacs/Network-Security.html)'s
+        data file.
+    -   Various Projectile files.
+    -   [pcache](https://github.com/sigma/pcache), the Emacs persistent
+        caching mechanism.
+    -   The savehist file
+    -   `gnus` stuff. Note that if you actually use `.newsrc` with other
+        newsreaders (in anno domini 2017 or later) you may want to reset
+        this.
+-   Load `ecfw-proxy`.
+
+``` commonlisp
+;; Contain state within config directory
+(setq bookmark-default-file (ecfw-root "bookmarks")
+      nsm-settings-file (ecfw-root "network-security.data")
+      package-user-dir (ecfw-root "elpa")
+      backup-directory-alist `(("" . ,(ecfw-root "backup")))
+      url-configuration-directory (ecfw-root "url")
+      projectile-known-projects-file (ecfw-root "projectile-bookmarks.eld")
+      projectile-cache-file (ecfw-root "projectile.cache")
+      pcache-directory
+      (let ((dir (ecfw-root "var/pcache")))
+        (when (not (file-exists-p dir))
+          (make-directory dir t))
+        dir)
+      savehist-file
+      (let ((dir (ecfw-root "tmp")))
+        (when (not (file-exists-p dir))
+          (make-directory (ecfw-root "tmp")))
+        (ecfw-root "tmp/savehist"))
+      gnus-startup-file (ecfw-root ".newsrc")
+      gnus-init-file (ecfw-root ".gnus"))
+
+(require 'ecfw-proxy (expand-file-name "ecfw-proxy.el" user-emacs-directory))
+
+(message "Loading configuration from %s" ecfw-config-dir)
 (load-file (expand-file-name "init.el" ecfw-config-dir))
 ```
 
 Default Configuration
 =====================
 
-The remainder of this configuration is put in the default location, `~/.emacs.d/config/`. If you want to reuse this framework in other configurations, you can copy it from there before customizing the default configuration. (Alternately, you can copy `config` somewhere else and use `EMACS_CONFIG_DIR` to make *that* your default configuration.)
+The remainder of this configuration is put in the default location,
+`~/.emacs.d/config/`. If you want to reuse this framework in other
+configurations, you can copy it from there before customizing the
+default configuration. (Alternately, you can copy `config` somewhere
+else and use `EMACS_CONFIG_DIR` to make *that* your default
+configuration.)
 
-    (eval-when-compile (require 'subr-x))
+``` commonlisp
+(eval-when-compile (require 'subr-x))
 
-    (defun ecfw--config-file (fname-base)
-      "Returns FNAME-BASE as it if was in the configuration
-      directory."
-      (expand-file-name fname-base ecfw-config-dir))
+(defun ecfw-find-config (fname-stub)
+  "Find the preferred configuration file, or return nil (after
+warning the user the file doesn't exist.)"
+  (let ((dot-el (ecfw-root (concat fname-stub ".el"))))
+    (if (file-readable-p dot-el)
+        dot-el
+      (progn
+        (message "NOTE: Couldn't find config file '%s'" dot-el)
+        nil))))
 
-    (defun ecfw-find-config (fname-stub)
-      "Find the preferred configuration file, or return nil (after
-    warning the user the file doesn't exist.)"
-      (let ((dot-el (ecfw--config-file (concat fname-stub ".el"))))
-        (if (file-readable-p dot-el)
-            dot-el
-          (progn
-            (message "NOTE: Couldn't find config file '%s'" dot-el)
-            nil))))
+(defun ecfw-load-config (fname)
+  "Load the configuration file FNAME-BASE."
+  (if (file-readable-p fname)
+      (progn
+        (message "Reading %s" fname)
+        (load-file fname))
+    (message "Couldn't load %s" fname)))
 
-    (defun ecfw-load-config (fname)
-      "Load the configuration file FNAME-BASE."
-      (if (file-readable-p fname)
-          (progn
-            (message "Reading %s" fname)
-            (load-file fname))
-        (message "Couldn't load %s" fname)))
+(defcustom ecfw--deferral-hook nil
+  "Hook run after configuration is run (but before loading
+  scratch.el. Add to this hook with the `ecfw-defer' macro.)")
+
+(defmacro ecfw-defer (&rest body)
+  "Defer execution of BODY until configuration files have run.
+
+BODY will run after the general, platform, host and user
+configurations have run, but before \"scratch.el\" is loaded."
+  `(add-hook 'ecfw--deferral-hook (lambda () ,@body)))
 
 
-    ;;; Load platform configuration files
-    (let* ((general-config (ecfw-find-config "emacs-config"))
-           (platform (replace-regexp-in-string "/" "_" (symbol-name system-type)))
-           (platform-config (ecfw-find-config platform))
-           (host-config (ecfw-find-config (system-name)))
-           (user-config (ecfw-find-config (user-login-name))))
-      (when general-config
-        (load-file general-config))
-      (when platform-config
-        (load-file platform-config))
-      (when host-config
-        (load-file host-config))
-      (when user-config
-        (load-file user-config)))
+;;; Not supposed to depend on the order something runs in a hook,
+;;; except I'm literally trying to run something absolute last, which
+;;; means running it in emacs-startup-hook (which runs last) AND
+;;; running it AFTER everything else in emacs-startup-hook.
+;;;
+;;; Hooks are run LIFO, so add scratch.el first, so it runs last.
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (message "^^Running scratch.el")
+            (load-file (ecfw-root "scratch.el"))))
 
-    ;;; Load scratch.el
-    (load-file (ecfw--config-file "scratch.el"))
+;;; Add the deferral hook next, so it runs next-to-last
+(add-hook 'emacs-startup-hook
+          (lambda ()
+            (message "^^Running deferred code")
+            (run-hooks 'ecfw--deferral-hook)))
+
+;;; Load platform configuration files.
+(let* ((general-config (ecfw-find-config "emacs-config"))
+       (platform (replace-regexp-in-string "/" "_" (symbol-name system-type)))
+       (platform-config (ecfw-find-config platform))
+       (host-config (ecfw-find-config (system-name)))
+       (user-config (ecfw-find-config (user-login-name))))
+  (when general-config
+    (load-file general-config))
+  (when platform-config
+    (load-file platform-config))
+  (when host-config
+    (load-file host-config))
+  (when user-config
+    (load-file user-config)))
+```
 
 Appendix 1: Proxy configuration functions
 =========================================
 
-The framework provides some functionality for automatically assessing which proxy it is behind and configuring accordingly.
+The framework provides some functionality for automatically assessing
+which proxy it is behind and configuring accordingly.
 
 Header
 ------
@@ -193,10 +426,12 @@ Code
 
 ### Core proxy detection
 
-The low-level interface to the proxy testing code. `ecfw-proxy-works-p` simply returns true if it can get to the requested URL via the requested proxy.
+The low-level interface to the proxy testing code. `ecfw-proxy-works-p`
+simply returns true if it can get to the requested URL via the requested
+proxy.
 
 ``` commonlisp
-(defun ecfw--proxy-works-p (proxy-services test-url)
+(defun ecfw-proxy--works-p (proxy-services test-url)
   (let* ((url-proxy-services proxy-services)
          ;; url-retrieve (well, open-network-stream) will error if it
          ;; can't find the proxy; this is the most likely outcome if
@@ -205,19 +440,20 @@ The low-level interface to the proxy testing code. `ecfw-proxy-works-p` simply r
                      (url-retrieve-synchronously test-url t)
                    (error nil))))
     (if buffer
-        (let (rc)
-          (with-current-buffer buffer
-            (goto-char (point-min))
-            (if (re-search-forward
-                 "^HTTP/[0-9]\\.[0-9] \\([0-9]\\{3\\}\\)"
-                 nil
-                 t)
-                (let ((code (string-to-number (match-string 1))))
-                  (if (= 200 code)
-                      (setq rc t)
-                    (setq rc nil)))
-              (setq rc  nil)))
-          rc)
+        (progn
+          (let (rc)
+            (with-current-buffer buffer
+              (goto-char (point-min))
+              (if (re-search-forward
+                   "^HTTP/[0-9]\\.[0-9] \\([0-9]\\{3\\}\\)"
+                   nil
+                   t)
+                  (let ((code (string-to-number (match-string 1))))
+                    (if (= 200 code)
+                        (setq rc t)
+                      (setq rc nil)))
+                (setq rc  nil)))
+            rc))
       nil)))
 
 (defun ecfw-proxy-works-p (proxy test-url)
@@ -229,15 +465,113 @@ cons cell of the form (\"service type\" . \"address:port\").
 
 TEST-URL is a URL which should be accessible through the proxy if
 it exists and is configured correctly."
-  (ecfw--proxy-works-p `(,proxy) test-url))
+ (ecfw-proxy--works-p `(,proxy) test-url))
+```
+
+### Setting the proxy
+
+Setting `url-proxy-services` gets us 80% of the way there, but for full
+compatibility, we need to add the traditional environment variables so
+any subprocesses we may call behave appropriately.
+
+``` commonlisp
+(defun ecfw-proxy--set (url-proxy-services-list)
+  "Configures proxy settings based on URL-PROXY-ENTRY
+
+URL-PROXY-ENTRY. is a list formatted as the value of
+`url-proxy-services'."
+  (let ((envars nil))
+    ;; Make a list of the environment variables we want to set. (Don't
+    ;; set them as we go in case there's an error in input.)
+    (cl-dolist (proxy-rec url-proxy-services-list)
+      (cl-destructuring-bind (key . value)
+          proxy-rec
+        (when (not (stringp key))
+          (error "Format error in %s: First value (%s) not a string"
+                 proxy-rec key))
+        (when (not (stringp value))
+          (error "Format error in %s: Second value (%s) not a string"
+                 proxy-rec value))
+
+        (if (string= key "no_proxy")
+            (progn
+              (add-to-list 'envars `(,"no_proxy" ,value))
+              (add-to-list 'envars `(,"NO_PROXY" ,value)))
+          (progn
+            (add-to-list 'envars
+                         `(,(format "%s_proxy" (downcase key)) ,value))
+            (add-to-list 'envars
+                         `(,(format "%s_PROXY" (upcase key)) ,value))))))
+    ;; Set the envars and url-proxy-services
+    (cl-dolist (envar envars)
+      (cl-destructuring-bind (key value)
+          envar
+        (setenv key value)))
+    (setq url-proxy-services url-proxy-services-list)))
+
+;; TODO: This is clunky. Integrate with --set, by taking note of the
+;; envars that would have been set from the previously value of
+;; `url-proxy-services' and unset them.
+(defun ecfw-proxy--unset ()
+  "Configure for use without any proxy."
+  (cl-dolist (svc '("http" "https" "ftp"))
+    (setenv (concat (downcase svc) "_proxy") "")
+    (setenv (concat (upcase svc)   "_PROXY") "")
+    (setq url-proxy-services nil)))
 ```
 
 ### The proxy file
 
-Information about the various proxies that might be used are stored in a file. The user defines the location of this file.
+Information about the various proxies that might be used are stored in a
+file. The user defines the location of this file.
+
+A proxy file looks like this:
 
 ``` commonlisp
-(defun ecfw--read-proxies-file (filename)
+((uni ".example.edu,.example-institute.org"
+      (("http"
+        "proxy.example.edu:8080"
+        ("http://www.google.com/index.html"))
+       ("https"
+        "proxy.example.edu:8080"
+        ("https://www.google.com/index.html"))))
+ (work ".internal.megacorp.com"
+       (("https"
+         "proxy.megacorp.com:1234"
+         ("http://www.google.com/index.html"))
+        ("https"
+         "proxy.megacorp.com:1234"
+         ("https://code.internal.megacorp.com/index.html")))))
+```
+
+As you can see, it's just a single lisp data structure. Each element in
+the list is a *proxy group*, which can be thought of as a discrete
+network location with several different services potentially proxied.
+
+Each proxy group has the following records:
+
+-   A label. This is a symbol, and can be used as a name to manually
+    select proxies with `ecfw-proxy-select`.
+-   What not to proxy, expressed in the format of a `NO_PROXY`
+    environment variable. If every domain should be proxied, this can be
+    `nil`.
+-   A list of *proxies*. Each element in the proxy list should contain
+    the following elements:
+    -   The service being proxied, as a string. (This is the first
+        element of a `url-proxy-services` entry.)
+    -   The proxy to use. (This is the second element of a
+        `url-proxy-services` entry.)
+    -   A list of *test URLs*. `ecfw-proxy-autoconf` uses these to test
+        whether it can connect through the proxy.
+
+Although the example only shows HTTP and HTTPS, it's possible to put any
+proxied services in that `url-proxy-services` can handle and
+`url-retrieve` can open. (Note that `ecfw-proxy` won't notice if you use
+test URLs from one service in an entry for another service, so don't do
+that.)
+
+``` commonlisp
+(defun ecfw-proxy--read-file (filename)
   (with-temp-buffer
   (insert-file-contents filename)
   (goto-char (point-min))
@@ -248,18 +582,22 @@ Information about the various proxies that might be used are stored in a file. T
   `ecfw-proxy-autoconf' and `ecfw-switch-proxy'.
 The format of PROXIES-FILE-NAME is an sexpr list of records. An example might look like this:
 
-  ((work \"http\"
-         \"proxy.example.com:1234\"
-         nil
-         (\"http://www.example.com\"
-          \"http://webmail.example.com\"))
-   (school http
-           \"proxy.university.edu:8080\"
-           \"university.edu,foo.org\"
-           (\"http://www.moogle.org\"
-            \"http://internet-websites.com\")))
+  ((uni \".example.edu,.example-institute.org\"
+        ((\"http\"
+          \"proxy.example.edu:8080\"
+          (\"http://www.google.com/index.html\"))
+         (\"https\"
+          \"proxy.example.edu:8080\"
+          (\"https://www.google.com/index.html\"))))
+   (work \".internal.megacorp.com\"
+         ((\"https\"
+           \"proxy.megacorp.com:1234\"
+           (\"http://www.google.com/index.html\"))
+          (\"https\"
+           \"proxy.megacorp.com:1234\"
+           (\"https://code.internal.megacorp.com/index.html\")))))
 
-Each record consists of the following fields:
+ Each record consists of the following fields:
 
   (label service proxy-addr no-proxy test-urls)
 
@@ -287,36 +625,97 @@ not wish to use it, you should remove it from your proxies file.")
 
 ### Autoconfiguration
 
+Autoconfiguration is mainly here to be called non-interactively at the
+beginning of an Emacs configuration, but it seems like it would be
+useful to call when changing network environments, so it's also an
+interactive command.
+
 ``` commonlisp
-(defun ecfw--proxy-autoconf (proxies-raw)
+(defun ecfw-proxy--autoconf (proxies-raw)
   (let ((final-proxies nil))
-    (cl-dolist (proxy-rec proxies-raw final-proxies)
-      (cl-destructuring-bind (label service addr no-proxy test-urls) proxy-rec
-        (let* ((services-rec `(,service . ,addr))
-               (proxy-works-p (lambda (test-url)
-                                (ecfw-proxy-works-p services-rec test-url))))
-          (when (and (not (eq test-urls nil))
-                     (cl-every proxy-works-p test-urls))
-            (add-to-list 'final-proxies services-rec)
-            (when no-proxy
-              (add-to-list 'final-proxies `("no_proxy" . ,no-proxy)))))))
+    (cl-dolist (proxy-group proxies-raw)
+      (cl-destructuring-bind (label no-proxy proxies) proxy-group
+        (cl-dolist (proxy-rec proxies)
+          (cl-destructuring-bind (service addr test-urls) proxy-rec
+            (let* ((service-rec `(,service . ,addr))
+                   (proxy-works-p (lambda (test-url)
+                                    (ecfw-proxy-works-p service-rec test-url))))
+              (when (and (not (eq test-urls nil))
+                         (cl-every proxy-works-p test-urls))
+                (add-to-list 'final-proxies service-rec)))))
+        (when (< 0 (length final-proxies))
+          ;; This proxy group appears to have connected. Add no_proxy
+          ;; if necessary and break out.
+          (when no-proxy
+            (add-to-list 'final-proxies `("no_proxy" . ,no-proxy)))
+          (cl-return))))
     final-proxies))
+
 
 
 (defun ecfw-proxy-autoconf (&optional proxies-file-name)
   "Autoconfigure Emacs to use any usable proxies.
 
-PROXIES-FILE-NAME is the name of the file containing proxy configuration information. If it is not supplied, the value of `ecfw-proxy-file' will be used.
+PROXIES-FILE-NAME is the name of the file containing proxy
+configuration information. If it is not supplied, the value of
+`ecfw-proxy-file' will be used. (For the format of
+PROXIES-FILE-NAME, see the documentation for `ecfw-proxy-file'.)
 
-For the format of PROXIES-FILE-NAME, see the documentation for `ecfw-proxy-file'."
-  (let ((proxies-file-name (if (eq nil proxies-file-name)
-                               ecfw-proxy-file
-                             proxies-file-name)))
+If called interactively, this command ignores its prefix argument
+and uses `ecfw-proxy-file' for its proxies. If that variable is
+not configured or points to a non-existant file, this command has
+no effect."
+  (interactive)
+  (let ((proxies-file-name (if (stringp proxies-file-name)
+                               proxies-file-name
+                             ecfw-proxy-file)))
     (when (and proxies-file-name
                (file-exists-p proxies-file-name))
-      (setq url-proxy-services
-            (ecfw--proxy-autoconf
-             (ecfw--read-proxies-file proxies-file-name))))))
+      (ecfw-proxy--set
+       (ecfw-proxy--autoconf
+        (ecfw-proxy--read-file proxies-file-name))))))
+```
+
+### Proxy selection
+
+It's sometimes nice to manually set the proxy, as when troubleshooting.
+If the proxy is listed in the proxies file, `ecfw-proxy-set` simplifies
+this somewhat.
+
+``` commonlisp
+(defun ecfw-proxy-switch (&optional proxy-file-name)
+  "Convert PROXY-FILE-NAME into a list of proxy options.
+
+If PROXY-FILE-NAME is not supplied, use the value of `ecfw-proxy-file'."
+  (let ((proxy-file-name (if proxy-file-name
+                             proxy-file-name
+                           ecfw-proxy-file)))
+    (if proxy-file-name
+        (progn
+          (let* ((proxies-raw (ecfw-proxy--read-file proxy-file-name))
+                 (proxy-group
+                  (assoc
+                   (intern (completing-read "Which proxy? " proxies-raw))
+                   proxies-raw)))
+            (cl-destructuring-bind (label no-proxy proxies) proxy-group
+              (let ((vals nil))
+                (cl-dolist (proxy proxies)
+                  (cl-destructuring-bind (service addr tests) proxy
+                    (add-to-list 'vals `(,service . ,addr))))
+                (when no-proxy
+                  (add-to-list 'vals `("no_proxy" . ,no-proxy)))
+                (ecfw-proxy--set vals)))))
+      (progn
+        (message "Configure proxy file in ecfw-proxy-file to switch proxies.")
+        nil))))
+
+(defun ecfw-proxy-select (&optional arg)
+  "Select a proxy from the list of proxies in `ecfw-proxy-file'.
+If ARG is non-nil, configure for use without a proxy."
+  (interactive "P")
+  (if arg
+      (ecfw-proxy--unset)
+    (ecfw-proxy-switch)))
 ```
 
 Provides
