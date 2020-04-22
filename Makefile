@@ -27,7 +27,7 @@ tangle:
 README.md: emacs-config-framework.org
 	$(PANDOC) -i emacs-config-framework.org \
 	          -o README.md \
-	          -w markdown_github
+	          -w gfm
 
 
 # Rules of installing:
