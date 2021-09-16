@@ -116,10 +116,6 @@ Controls which configuration (or sub-configuration, if you prefer) Emacs will us
 
 If this variable is not defined, Emacs will look for a configuration in =~/.emacs.d/config=.
 
-** =EMACS_CONFIG_DEBUG=
-
-When debugging a configuration, setting this variable will tell the configuration to be more verbose in what it's doing. By default, this will set =use-package-verbose= to =t=. You may also use it to conditionally produce more output for debugging.
-
 * Configuration directory
 
 ** Boilerplate
@@ -225,7 +221,6 @@ The remainder of this configuration is put in the default location, =~/.emacs.d/
   configurations have run, but before \"scratch.el\" is loaded."
     `(add-hook 'ecfw--deferral-hook (lambda () ,@body)))
 
-
   ;;; Not supposed to depend on the order something runs in a hook,
   ;;; except I'm literally trying to run something absolute last, which
   ;;; means running it in emacs-startup-hook (which runs last) AND
@@ -250,12 +245,20 @@ The remainder of this configuration is put in the default location, =~/.emacs.d/
          (host-config (ecfw-find-config (system-name)))
          (user-config (ecfw-find-config (user-login-name))))
     (when general-config
+      (message "%s: Loading %s"
+               (format-time-string "%Y-%m-%d") general-config)
       (load-file general-config))
     (when platform-config
+      (message "%s: Loading %s"
+               (format-time-string "%Y-%m-%d") platform-config)
       (load-file platform-config))
     (when host-config
+      (message "%s: Loading %s"
+               (format-time-string "%Y-%m-%d") host-config)
       (load-file host-config))
     (when user-config
+      (message "%s: Loading %s"
+               (format-time-string "%Y-%m-%d") user-config)
       (load-file user-config)))
 #+end_src
 
@@ -562,3 +565,8 @@ It's sometimes nice to manually set the proxy, as when troubleshooting. If the p
   (provide 'ecfw-proxy)
   ;;; ecfw-proxy.el ends here
 #+END_SRC
+* Appendix 2: Profiling
+
+Emacs running slow? Find the slow bits with profiling!
+
+There's an
