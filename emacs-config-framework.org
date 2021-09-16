@@ -178,7 +178,8 @@ The fiddly bits in between:
             (make-directory (ecfw-root "tmp")))
           (ecfw-root "tmp/savehist"))
         gnus-startup-file (ecfw-root ".newsrc")
-        gnus-init-file (ecfw-root ".gnus"))
+        gnus-init-file (ecfw-root ".gnus")
+        elpy-rpc-virtualenv-path (ecfw-root "elpy"))
 
   (require 'ecfw-proxy (expand-file-name "ecfw-proxy.el" user-emacs-directory))
 
