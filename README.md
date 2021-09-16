@@ -22,16 +22,22 @@ $ make install
 
 Files are run in the following order:
 
-  - `~/.emacs.d/config/emacs-config.el`
-  - `~/.emacs.d/config/darwin.el` (for MacOS. `gnu-linux.el` for Linux
+-   `~/.emacs.d/config/emacs-config.el`
+-   `~/.emacs.d/config/darwin.el` (for MacOS. `gnu-linux.el` for Linux
     or LSFW, `windows.el` or something for Windows? Idk, I don't use it.
-    Read *Platform-specific configuration*.)
-  - `~/.emacs.d/config/your-host.el` (if your machine's `hostname` is
-    `your-host`. Read *Platform-, host-, and user-specific
-    configuration*.)
-  - `~/.emacs.d/config/pgroce.el` (if your username is `pgroce`. Read
-    *Platform-, host-, and user-specific configuration*.)
-  - `~/.emacs.d/config/scratch.el` (Read *The scratch file*.)
+    Read <span class="spurious-link"
+    target="*Platform-specific configuration">*Platform-specific
+    configuration*</span>.)
+-   `~/.emacs.d/config/your-host.el` (if your machine's `hostname` is
+    `your-host`. Read <span class="spurious-link"
+    target="*Platform-, host-, and user-specific configuration">*Platform-,
+    host-, and user-specific configuration*</span>.)
+-   `~/.emacs.d/config/pgroce.el` (if your username is `pgroce`. Read
+    <span class="spurious-link"
+    target="*Platform-, host-, and user-specific configuration">*Platform-,
+    host-, and user-specific configuration*</span>.)
+-   `~/.emacs.d/config/scratch.el` (Read <span class="spurious-link"
+    target="*The scratch file">*The scratch file*</span>.)
 
 If you want to run out of a directory other than `config`, define a new
 name in the environment variable `EMACS_CONFIG_DIR`. (It has to live in
@@ -39,7 +45,7 @@ name in the environment variable `EMACS_CONFIG_DIR`. (It has to live in
 using Emacs, you're weird enough.
 
 If you want to try some weird new thing out or fix a bug in your config
-or whatever, do it in production\! Write it out in `scratch.el` and
+or whatever, do it in production! Write it out in `scratch.el` and
 `eval` it. If it works, save `scratch.el` and it will be applied the
 next time you start up.
 
@@ -113,11 +119,11 @@ configuration, the general configuration file would be in
 `~/.emacs.d/config/emacs-config.el`.)
 
 1.  General configuration
-    
+
     The general configuration file is named `emacs-config.el`.
 
 2.  Platform-specific configuration
-    
+
     The platform-specific configuration file (or "platform file") is the
     return value of `system-type` as a string, with any slashes
     converted to underscores, plus the file suffix. On an OS X system,
@@ -125,17 +131,17 @@ configuration, the general configuration file would be in
     Linux, the configuration looks for `gnu_linux.el`.
 
 3.  Host-specific configuration
-    
+
     The host-specific configuration file (or "host file") is the string
     returned by the `system-name` function, plus the file suffix. For a
     host named `foo.bar.baz`, for instance, the file would be
     `foo.bar.baz.el`.
-    
+
     Note that machines that change networks (e.g., laptops) may not
     reliably have the same host name.
 
 4.  User-specific configuration
-    
+
     The user-specific configuration file (or "user file") is the string
     returned by the `user-login-name` function, plus the file suffix.
     For the user `jdoe`, this file would be `jdoe.el`.
@@ -192,8 +198,9 @@ Use of this code is optional, so if you don't have this problem, it will
 stay out of your way.
 
 The code for proxy autoconfiguration is at the end of this document, in
-*Appendix 1: Proxy configuration functions*. It is output in a separate
-file, `ecfw-proxy.el`.
+<span class="spurious-link"
+target="Appendix 1: Proxy configuration functions">*Appendix 1: Proxy configuration functions*</span>.
+It is output in a separate file, `ecfw-proxy.el`.
 
 # Environment variables
 
@@ -208,13 +215,6 @@ contain a file called `init.el`.
 
 If this variable is not defined, Emacs will look for a configuration in
 `~/.emacs.d/config`.
-
-## `EMACS_CONFIG_DEBUG`
-
-When debugging a configuration, setting this variable will tell the
-configuration to be more verbose in what it's doing. By default, this
-will set `use-package-verbose` to `t`. You may also use it to
-conditionally produce more output for debugging.
 
 # Configuration directory
 
@@ -251,29 +251,27 @@ use, makes a note of it, and hands off control.
 
 The fiddly bits in between:
 
-  - Set the following variables to contain them within
+-   Set the following variables to contain them within
     `ecfw-config-dir`. (Individual configurations can, of course, set it
     to whatever they please.)
-      - `bookmarks`, for [Emacs
+    -   `bookmarks`, for [Emacs
         bookmarks](https://www.gnu.org/software/emacs/manual/html_node/emacs/Bookmarks.html).
-      - `package-user-dir`, so configurations don't share packages by
+    -   `package-user-dir`, so configurations don't share packages by
         default.
-      - `backup-directory-alist`, to contain backups.
-      - `url-configuration-directory`, where the `url` library parks its
+    -   `backup-directory-alist`, to contain backups.
+    -   `url-configuration-directory`, where the `url` library parks its
         state.
-      - The [Network Security
+    -   The [Network Security
         Manager](https://www.gnu.org/software/emacs/manual/html_node/emacs/Network-Security.html)'s
         data file.
-      - Various Projectile files.
-      - [pcache](https://github.com/sigma/pcache), the Emacs persistent
+    -   Various Projectile files.
+    -   [pcache](https://github.com/sigma/pcache), the Emacs persistent
         caching mechanism.
-      - The savehist file
-      - `gnus` stuff. Note that if you actually use `.newsrc` with other
+    -   The savehist file
+    -   `gnus` stuff. Note that if you actually use `.newsrc` with other
         newsreaders (in anno domini 2017 or later) you may want to reset
         this.
-  - Load `ecfw-proxy`.
-
-<!-- end list -->
+-   Load `ecfw-proxy`.
 
 ``` commonlisp
 ;; Contain state within config directory
@@ -295,7 +293,8 @@ The fiddly bits in between:
           (make-directory (ecfw-root "tmp")))
         (ecfw-root "tmp/savehist"))
       gnus-startup-file (ecfw-root ".newsrc")
-      gnus-init-file (ecfw-root ".gnus"))
+      gnus-init-file (ecfw-root ".gnus")
+      elpy-rpc-virtualenv-path (ecfw-root "elpy"))
 
 (require 'ecfw-proxy (expand-file-name "ecfw-proxy.el" user-emacs-directory))
 
@@ -344,7 +343,6 @@ BODY will run after the general, platform, host and user
 configurations have run, but before \"scratch.el\" is loaded."
   `(add-hook 'ecfw--deferral-hook (lambda () ,@body)))
 
-
 ;;; Not supposed to depend on the order something runs in a hook,
 ;;; except I'm literally trying to run something absolute last, which
 ;;; means running it in emacs-startup-hook (which runs last) AND
@@ -369,12 +367,20 @@ configurations have run, but before \"scratch.el\" is loaded."
        (host-config (ecfw-find-config (system-name)))
        (user-config (ecfw-find-config (user-login-name))))
   (when general-config
+    (message "%s: Loading %s"
+             (format-time-string "%Y-%m-%d") general-config)
     (load-file general-config))
   (when platform-config
+    (message "%s: Loading %s"
+             (format-time-string "%Y-%m-%d") platform-config)
     (load-file platform-config))
   (when host-config
+    (message "%s: Loading %s"
+             (format-time-string "%Y-%m-%d") host-config)
     (load-file host-config))
   (when user-config
+    (message "%s: Loading %s"
+             (format-time-string "%Y-%m-%d") user-config)
     (load-file user-config)))
 ```
 
@@ -531,18 +537,18 @@ network location with several different services potentially proxied.
 
 Each proxy group has the following records:
 
-  - A label. This is a symbol, and can be used as a name to manually
+-   A label. This is a symbol, and can be used as a name to manually
     select proxies with `ecfw-proxy-select`.
-  - What not to proxy, expressed in the format of a `NO_PROXY`
+-   What not to proxy, expressed in the format of a `NO_PROXY`
     environment variable. If every domain should be proxied, this can be
     `nil`.
-  - A list of *proxies*. Each element in the proxy list should contain
+-   A list of *proxies*. Each element in the proxy list should contain
     the following elements:
-      - The service being proxied, as a string. (This is the first
+    -   The service being proxied, as a string. (This is the first
         element of a `url-proxy-services` entry.)
-      - The proxy to use. (This is the second element of a
+    -   The proxy to use. (This is the second element of a
         `url-proxy-services` entry.)
-      - A list of *test URLs*. `ecfw-proxy-autoconf` uses these to test
+    -   A list of *test URLs*. `ecfw-proxy-autoconf` uses these to test
         whether it can connect through the proxy.
 
 Although the example only shows HTTP and HTTPS, it's possible to put any
@@ -705,3 +711,9 @@ If ARG is non-nil, configure for use without a proxy."
 (provide 'ecfw-proxy)
 ;;; ecfw-proxy.el ends here
 ```
+
+# Appendix 2: Profiling
+
+Emacs running slow? Find the slow bits with profiling!
+
+There's an
