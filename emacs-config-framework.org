@@ -341,6 +341,7 @@ Setting =url-proxy-services= gets us 80% of the way there, but for full compatib
 
   URL-PROXY-ENTRY. is a list formatted as the value of
   `url-proxy-services'."
+    (message "[ecfw] Setting proxy for '%s'" url-proxy-services-list)
     (let ((envars nil))
       ;; Make a list of the environment variables we want to set. (Don't
       ;; set them as we go in case there's an error in input.)
@@ -514,11 +515,13 @@ Autoconfiguration is mainly here to be called non-interactively at the beginning
     (let ((proxies-file-name (if (stringp proxies-file-name)
                                  proxies-file-name
                                ecfw-proxy-file)))
-      (when (and proxies-file-name
-                 (file-exists-p proxies-file-name))
-        (ecfw-proxy--set
-         (ecfw-proxy--autoconf
-          (ecfw-proxy--read-file proxies-file-name))))))
+      (if (and proxies-file-name
+               (file-exists-p proxies-file-name))
+          (progn
+            (ecfw-proxy--set
+             (ecfw-proxy--autoconf
+              (ecfw-proxy--read-file proxies-file-name))))
+        (message "[ecfw] No proxy file, not configuring proxies"))))
 #+END_SRC
 
 *** Proxy selection
