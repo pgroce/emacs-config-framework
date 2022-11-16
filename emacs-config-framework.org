@@ -569,8 +569,3 @@ It's sometimes nice to manually set the proxy, as when troubleshooting. If the p
   (provide 'ecfw-proxy)
   ;;; ecfw-proxy.el ends here
 #+END_SRC
-* Appendix 2: Profiling
-
-Emacs running slow? Find the slow bits with profiling!
-
-There's an
