@@ -22,7 +22,7 @@ $ make install
 Files are run in the following order:
 
 - =~/.emacs.d/config/emacs-config.el=
-- =~/.emacs.d/config/darwin.el= (for MacOS. =gnu-linux.el= for Linux or LSFW, =windows.el= or something for Windows? Idk, I don't use it. Read [[*Platform-specific configuration][Platform-specific configuration]].)
+- =~/.emacs.d/config/darwin.el= (for MacOS. =gnu_linux.el= for Linux or LSFW, =windows.el= or something for Windows? Idk, I don't use it. Read [[*Platform-specific configuration][Platform-specific configuration]].)
 - =~/.emacs.d/config/your-host.el= (if your machine's =hostname= is =your-host=. Read  [[*Platform-, host-, and user-specific configuration][Platform-, host-, and user-specific configuration]].)
 - =~/.emacs.d/config/pgroce.el= (if your username is =pgroce=. Read  [[*Platform-, host-, and user-specific configuration][Platform-, host-, and user-specific configuration]].)
 - =~/.emacs.d/config/scratch.el= (Read [[*The scratch file][The scratch file]].)
