@@ -36,6 +36,7 @@ README.md: emacs-config-framework.org
 # - We may not own init.el, so back it up
 
 install-base: tangle
+	mkdir -p $(EMACS_HOME)
 	rm -rf $(EMACS_HOME)/config_default
 	cp -rf build/config $(EMACS_HOME)/config_default
 
