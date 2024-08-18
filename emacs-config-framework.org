@@ -569,3 +569,43 @@ It's sometimes nice to manually set the proxy, as when troubleshooting. If the p
   (provide 'ecfw-proxy)
   ;;; ecfw-proxy.el ends here
 #+END_SRC
+* Appendix 2: Configuration Features
+
+Configuration features are a simple way to parameterize a configuration, beyond the user/host/OS customization files above. A set of labels is read in from a file named =features= in the configuration directory, one per line (blank lines and lines beginning with a semicolon (=;=) are ignored); each label represents a feature, which can be queried for with =ecfw-has-feature=. Feature labels will be =intern='ed as symbols prepended with =ecfw/=, so they should only include valid symbol characters.
+
+=ecfw-feature-p= returns non-=nil= if a feature has been defined. Calling =(ecfw-feature-p 'foo)= is fully equivalent to calling =(intern-soft "ecfw/foo")=, it's just slightly more descriptive.
+
+This also means one can define configuration features dynamically by =intern=-ing the appropriate feature symbol. This is discouraged, as some configuration code may be executed before such features are defined, making troubleshooting the configuration more difficult. But it's just defining and checking for symbols; no attempt is made to save the user from themself.
+
+A small set of features is predefined, representing the system type, system hostname, and user name. For a =linux= system named =pear= and a user =phil=, these would be:
+
+- platform-linux
+- host-pear
+- user-phil
+
+These are, again, readily available in Emacs Lisp via other means, but are exposed here as a convenience, in a manner consistent with other features.
+
+** Header
+
+#+BEGIN_SRC emacs-lisp :tangle ecfw-features.el
+  ;;; ecfw-features.el --- Configuration features
+
+  ;; Copyright (C) 2024 Phil Groce
+
+  ;; Author: Phil Groce <pgroce@gmail.com>
+  ;; Version: 0.1
+  ;; Keywords: configuration
+#+END_SRC
+
+** Code
+
+#+begin_src emacs-lisp :tangle ecfw-features.el
+
+#+end_src
+
+** Provides
+
+#+begin_src emacs-lisp :tangle ecfw-features.el
+  (provide 'ecfw-features)
+  ;;; ecfw-features.el ends here
+#+end_src
