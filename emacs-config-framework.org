@@ -92,7 +92,7 @@ You can defer any code to the end of configuration (after the general, platform,
 
 By default, Emacs starts with a =\*scratch\*= buffer. This buffer is in fundamental mode, so the user can run elisp in it. However, nothing in =\*scratch\*= is saved to disk.
 
-This configuration replaces the =\*scratch\*= buffer with a file, =scratch.el=. =scratch.el= is automatically loaded and, by default, is the first buffer visited, just like =\*scratch\*=. However, it is a first-class configuration file; on startup, =scratch.el= is loaded after all other configuration files. =scratch.el= is, thus, a persistent =\*scratch\*=.
+This configuration replaces the =\*scratch\*= buffer with a file, =scratch.el=.[fn:: Conceptually; the =\*scratch\*= is retained if you want to use it.] =scratch.el= is automatically loaded and, by default, is the first buffer visited, just like =\*scratch\*=. However, it is a first-class configuration file; on startup, =scratch.el= is loaded after all other configuration files. =scratch.el= is, thus, a persistent =\*scratch\*=.
 
 =scratch.el= is nice for keeping one's configuration tidy while still trying out new things. Users can put experimental changes in the =scratch.el=  buffer and try them out interactively (e.g., with =eval-last-sexp=). If they want to keep the changess around for a while, they can save them to =scratch.el= and the changes will persist on restart. If they don't like a change, it's easy to remove from =scratch.el=. Otherwise, they can think about putting it in a sensible spot in their "real config".
 
