@@ -19,30 +19,24 @@ $ make install
 
 ** Configuration
 
+Configuration files are stored in a subdirectory in =.emacs.d=. The examples below use =config=, which is the default. If you want use a subdirectory with a different name, define it in the environment variable =EMACS_CONFIG_DIR=. (The folder must live in =~/emacs.d=.)
+
 Files are run in the following order:
 
+- =~/.emacs.d/config/emacs-early.el= (called by =init-early.el=)
 - =~/.emacs.d/config/emacs-config.el=
-- =~/.emacs.d/config/darwin.el= (for MacOS. =gnu_linux.el= for Linux or LSFW, =windows.el= or something for Windows? Idk, I don't use it. Read [[*Platform-specific configuration][Platform-specific configuration]].)
-- =~/.emacs.d/config/your-host.el= (if your machine's =hostname= is =your-host=. Read  [[*Platform-, host-, and user-specific configuration][Platform-, host-, and user-specific configuration]].)
+- =~/.emacs.d/config/darwin.el= (for MacOS. =gnu_linux.el= for Linux or LSFW, =windows.el= for Windows. See also: [[*Platform-specific configuration][Platform-specific configuration]].)
+- =~/.emacs.d/config/<hostname>.el= (See also: [[*Platform-, host-, and user-specific configuration][Platform-, host-, and user-specific configuration]].)
 - =~/.emacs.d/config/pgroce.el= (if your username is =pgroce=. Read  [[*Platform-, host-, and user-specific configuration][Platform-, host-, and user-specific configuration]].)
 - =~/.emacs.d/config/scratch.el= (Read [[*The scratch file][The scratch file]].)
 
-If you want to run out of a directory other than =config=, define a new name in the environment variable =EMACS_CONFIG_DIR=. (It has to live in =~/emacs.d= though.) By default, just leave it =config=. You're already using Emacs, you're weird enough.
-
-If you want to try some weird new thing out or fix a bug in your config or whatever, do it in production! Write it out in =scratch.el= and =eval= it. If it works, save =scratch.el= and it will be applied the next time you start up.
-
-If you want to be paranoid, copy your =config= directory to another directory in =~/.emacs.d/=, change =EMACS_CONFIG_DIR= to point to it, and start another copy of Emacs. It will take its config from that directory instead.
-
-When your =scratch.el= looks like a trasheap, move things into your "real" configuration files (=darwin.el= et al.) Use the =EMACS_CONFIG_DIR= trick above to keep your known-good config around and test that you haven't borked everything. (You've borked everything.) When you've fixed everything you borked, check it into version control somewhere, you animal.
-
-
 * Installation
 
-To install, clone the repository and run =make install= in the repo. Or heck, copy/paste directly from this file; it's virtually no code at all.
+To install, clone the repository and run =make install= in the repo. You can also copy/paste directly from this file; it's virtually no code at all.
 
 You will need the Emacs you want to install to in your path. If you want to specify the copy of Emacs to use explicitly, you will need to modify the Makefile, or create a file called =localvars.mk= containing the path to Emacs in the variable =EMACS=.
 
-=make install= doesn't actually install the configuration, because they may blow away Emacs configuration you care about. Instead, it generates commands you can copy/paste into a terminal to install. If you care about the contents of your =init.el=, /back it up before running these commands/.
+=make install= doesn't actually install the configuration, because that may overwrite an Emacs configuration you care about. Instead, it generates commands you can copy/paste into a terminal to install. If you care about the contents of your =init.el=, /back it up before running these commands/.
 
 * Features
 
@@ -54,11 +48,11 @@ By default, Emacs will start the configuration located in =config=. To change it
 
 ** Platform-, host-, and user-specific configuration
 
-The provided default configuration will look for a general configuration file. It will then load a file corresponding to the platform, followed by a file corresponding to the hostname, followed by a file corresponding to the username. If any of these files do not exist, they will be skipped and the configuration will look for the next file.
+The modular configuration used by this framework provides a convention for customization on a per-OS, per-machine, or per-user basis without wrapping code in conditionals. More specific scopes of configuration are loaded after more general ones so general defaults can be overridden.
 
-This permits users to share the more generic parts of their configuration with multiple hosts or accounts, while still being able to easily add more specific or sensitive information in the environments where it's needed. For instance, a user may have their generic configuration in a repo on Github (possibly with platform-specific customizations); have user-specific configurations stored in source control on their corporate or home network; and have individual tweaks stored in host-specific files on different machines.
+This way of working enables users to make more general parts of their configuration available publicly (e.g., on Github) while keeping more sensitive or specific parts of the configuration in a more local scope.
 
-All of the configuration files are optional; if a user wants to put all their configuration in one of them and ignore the rest, they can.
+Customization is optional; if any of these files do not exist, they will be skipped and the configuration will look for the next file.
 
 *** Naming conventions
 
@@ -116,20 +110,32 @@ Controls which configuration (or sub-configuration, if you prefer) Emacs will us
 
 If this variable is not defined, Emacs will look for a configuration in =~/.emacs.d/config=.
 
-* Configuration directory
+* Code
+
+With the addition of =early-init.el= we have the opportunity to set some things up very early.
 
 ** Boilerplate
 
-We need this so =package.el= won't automatically insert it later. ¯\_(ツ)_/¯
+We disable native compilation because of a bug in gcc that is unlikely to be fixed in [[https://brew.sh][Homebrew]].
 
-#+BEGIN_SRC emacs-lisp :tangle init.el
-  ;(package-initialize)
+#+BEGIN_SRC emacs-lisp :tangle early-init.el
+  (setq native-comp-deferred-compilation nil)
 #+END_SRC
 
-** Configuration root
-=ecfw-config-dir= is the path to the directory containing the Emacs configuration. =ecfw-root= is a macro to shorten the process of defining a file location relative to =ecfw-config-dir=. (The name is purposely short so it can be inlined easily.)
 
-#+BEGIN_SRC emacs-lisp :tangle init.el
+** Early initialization
+In =early-init.el= we define the core ECFW functionality so it is available to the user as soon as possible. All of these functions are self-contained, use only core Emacs libraries, and do not do anything with the GUI or packaging, so they are safe to run here.
+
+- =ecfw-config-dir= is the path to the directory containing the Emacs configuration. =ecfw-root= is a macro to shorten the process of defining a file location relative to =ecfw-config-dir=. (The name is purposely short so it can be inlined easily.)
+
+- =ecfw-load-file= is a macro to call =load-file= on a file in =ecfw-config-dir=. The internal functions =ecfw--log= and =ecfw--log-load= ensure consistent logging.
+
+- =ecfw--platform= is a private function to consistently translate the =system-type= to a format that can be used in file names. It is used in both the early and normal initialization, so it is defined here.
+
+- =ecfw-defer= is used to defer the execution of code until after all the configuration files have run, but before the code in =scratch.el=. =scratch.el= always runs last. This is done because =scratch.el= is conceptually the most local and specific place to put configuration; as such, I think it makes sense to give it the last word, so to speak. If you find this limitation unacceptable, then define a hook in =config/early-config.el= to store deferred code in, and run it as the last line in =scratch.el=.
+
+#+BEGIN_SRC emacs-lisp :tangle early-init.el
+  ;; Rooting file names to the configuration directory
   (defconst ecfw-config-dir
     (expand-file-name (or (getenv "EMACS_CONFIG_DIR") "config")
                       user-emacs-directory)
@@ -137,28 +143,66 @@ We need this so =package.el= won't automatically insert it later. ¯\_(ツ)_/¯
 
   (defmacro ecfw-root (fname &optional make-dir)
     `(expand-file-name ,fname ecfw-config-dir))
+
+
+  ;; Loading files from the configuration directory
+  (defmacro ecfw--log (fmt-str &rest vars)
+    (let ((fmt-str (concat "ECFW: %s: " fmt-str)))
+      `(message ,fmt-str ,(format-time-string "%Y-%m-%d") ,@vars)))
+
+  (defmacro ecfw--log-load (to-load)
+    `(ecfw--log "Loading '%s'" ,to-load))
+
+  (defmacro ecfw-load-file (to-load)
+    "Load TO-LOAD from the the directory in `ecfw-config-dir'."
+    (let ((expanded (expand-file-name to-load ecfw-config-dir)))
+      `(if (file-readable-p ,expanded)
+           (progn
+             (ecfw--log-load ,expanded)
+             (load-file ,expanded))
+         (progn
+           (ecfw--log "'%s' not found, skipped loading" ,expanded)
+           nil))))
+
+  ;; Platform munging
+  (defmacro ecfw--platform ()
+    `(replace-regexp-in-string "/" "_" (symbol-name system-type)))
+
+  ;; Deferring code
+
+  (defcustom ecfw--deferral-hook nil
+    "Hook run after configuration is run (but before loading
+    scratch.el. Add functions to this hook with the `ecfw-defer' macro.)")
+
+  (defmacro ecfw-defer (&rest body)
+    "Defer execution of BODY until configuration files have run.
+
+  BODY will run after the general, platform, host and user
+  configurations have run, but before \"scratch.el\" is loaded."
+    `(add-hook 'ecfw--deferral-hook (lambda () ,@body)))
+
+
+
+
 #+END_SRC
 
+** Sandboxing
 
-** Main startup
+Set the following variables to contain them within =ecfw-config-dir=. (Individual configurations can, of course, set it to whatever they please.)
 
-=init.el= most importantly figures out which configuration it should use, makes a note of it, and hands off control.
+TODO: This list is surely outdated and needs to reflect changes made since when this was first written in—uh, wow—2017.
 
-The fiddly bits in between:
+- =bookmarks=, for [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Bookmarks.html][Emacs bookmarks]].
+- =package-user-dir=, so configurations don't share packages by default.
+- =backup-directory-alist=, to contain backups.
+- =url-configuration-directory=, where the =url= library parks its state.
+- The [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Network-Security.html][Network Security Manager]]'s data file.
+- Various Projectile files.
+- [[https://github.com/sigma/pcache][pcache]], the Emacs persistent caching mechanism.
+- The savehist file
+- =gnus= stuff. Note that if you actually use =.newsrc= with other newsreaders (in anno domini 2017 or later) you may want to reset this.
 
- * Set the following variables to contain them within =ecfw-config-dir=. (Individual configurations can, of course, set it to whatever they please.)
-   + =bookmarks=, for [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Bookmarks.html][Emacs bookmarks]].
-   + =package-user-dir=, so configurations don't share packages by default.
-   + =backup-directory-alist=, to contain backups.
-   + =url-configuration-directory=, where the =url= library parks its state.
-   + The [[https://www.gnu.org/software/emacs/manual/html_node/emacs/Network-Security.html][Network Security Manager]]'s data file.
-   + Various Projectile files.
-   + [[https://github.com/sigma/pcache][pcache]], the Emacs persistent caching mechanism.
-   + The savehist file
-   + =gnus= stuff. Note that if you actually use =.newsrc= with other newsreaders (in anno domini 2017 or later) you may want to reset this.
- * Load =ecfw-proxy=.
-
-#+BEGIN_SRC emacs-lisp :tangle init.el
+#+begin_src emacs-lisp :tangle early-init.el
   ;; Contain state within config directory
   (setq bookmark-default-file (ecfw-root "bookmarks")
         nsm-settings-file (ecfw-root "network-security.data")
@@ -180,12 +224,39 @@ The fiddly bits in between:
         gnus-startup-file (ecfw-root ".newsrc")
         gnus-init-file (ecfw-root ".gnus")
         elpy-rpc-virtualenv-path (ecfw-root "elpy"))
+#+end_src
 
-  (require 'ecfw-proxy (expand-file-name "ecfw-proxy.el" user-emacs-directory))
+** Custom early initialization
 
-  (message "Loading configuration from %s" ecfw-config-dir)
-  (load-file (expand-file-name "init.el" ecfw-config-dir))
+Finally, we hand control off to the =early-init.el= file in =ecfw-config-dir=.
+
+#+begin_src emacs-lisp :tangle early-init.el
+  (ecfw-load-file "early-init.el")
+#+end_src
+
+* Default early configuration
+
+The =early-init.el= for the user configuration directory will install into the default location, =~/.emacs.d/config/=. If you want to reuse this framework in other configurations, you can copy it from there before customizing the default configuration. Alternately, you can copy =config= somewhere else and use =EMACS_CONFIG_DIR= to make /that/ your default configuration.
+
+The =config/early-init.el= and =config/init.el= files have a similar structure, as laid out above. Users are encouraged to favor the regular configuration files over the =early-= ones when possible, but they are there if necessary.
+
+#+begin_src emacs-lisp :tangle (prog1 "config/early-init.el" (make-directory "config" "."))
+  ;;; Load platform configuration files.
+  (ecfw-load-file "early-emacs-config.el")
+  (ecfw-load-file (concat "early-" (ecfw--platform) ".el"))
+  (ecfw-load-file (concat "early-" (system-name) ".el"))
+  (ecfw-load-file (concat "early-" (user-login-name) ".el"))
+#+end_src
+
+
+* Main startup
+
+With most everything defined in =early-init.el=, =init.el= simply hands off control to the =init.el= in =ecfw-config-dir=.
+
+#+BEGIN_SRC emacs-lisp :tangle init.el
+  (ecfw-load-file "init.el")
 #+END_SRC
+
 
 * Default Configuration
 The remainder of this configuration is put in the default location, =~/.emacs.d/config/=. If you want to reuse this framework in other configurations, you can copy it from there before customizing the default configuration. (Alternately, you can copy =config= somewhere else and use =EMACS_CONFIG_DIR= to make /that/ your default configuration.)
@@ -193,79 +264,22 @@ The remainder of this configuration is put in the default location, =~/.emacs.d/
 #+BEGIN_SRC emacs-lisp :tangle (prog1 "config/init.el" (make-directory "config" "."))
   (eval-when-compile (require 'subr-x))
 
-  (defun ecfw-find-config (fname-stub)
-    "Find the preferred configuration file, or return nil (after
-  warning the user the file doesn't exist.)"
-    (let ((dot-el (ecfw-root (concat fname-stub ".el"))))
-      (if (file-readable-p dot-el)
-          dot-el
-        (progn
-          (message "NOTE: Couldn't find config file '%s'" dot-el)
-          nil))))
-
-  (defun ecfw-load-config (fname)
-    "Load the configuration file FNAME-BASE."
-    (if (file-readable-p fname)
-        (progn
-          (message "Reading %s" fname)
-          (load-file fname))
-      (message "Couldn't load %s" fname)))
-
-  (defcustom ecfw--deferral-hook nil
-    "Hook run after configuration is run (but before loading
-    scratch.el. Add to this hook with the `ecfw-defer' macro.)")
-
-  (defmacro ecfw-defer (&rest body)
-    "Defer execution of BODY until configuration files have run.
-
-  BODY will run after the general, platform, host and user
-  configurations have run, but before \"scratch.el\" is loaded."
-    `(add-hook 'ecfw--deferral-hook (lambda () ,@body)))
-
-  ;;; Not supposed to depend on the order something runs in a hook,
-  ;;; except I'm literally trying to run something absolute last, which
-  ;;; means running it in emacs-startup-hook (which runs last) AND
-  ;;; running it AFTER everything else in emacs-startup-hook.
-  ;;;
-  ;;; Hooks are run LIFO, so add scratch.el first, so it runs last.
-  (add-hook 'emacs-startup-hook
-            (lambda ()
-              (message "^^Running scratch.el")
-              (load-file (ecfw-root "scratch.el"))))
-
-  ;;; Add the deferral hook next, so it runs next-to-last
-  (add-hook 'emacs-startup-hook
-            (lambda ()
-              (message "^^Running deferred code")
-              (run-hooks 'ecfw--deferral-hook)))
-
   ;;; Load platform configuration files.
-  (let* ((general-config (ecfw-find-config "emacs-config"))
-         (platform (replace-regexp-in-string "/" "_" (symbol-name system-type)))
-         (platform-config (ecfw-find-config platform))
-         (host-config (ecfw-find-config (system-name)))
-         (user-config (ecfw-find-config (user-login-name))))
-    (when general-config
-      (message "%s: Loading %s"
-               (format-time-string "%Y-%m-%d") general-config)
-      (load-file general-config))
-    (when platform-config
-      (message "%s: Loading %s"
-               (format-time-string "%Y-%m-%d") platform-config)
-      (load-file platform-config))
-    (when host-config
-      (message "%s: Loading %s"
-               (format-time-string "%Y-%m-%d") host-config)
-      (load-file host-config))
-    (when user-config
-      (message "%s: Loading %s"
-               (format-time-string "%Y-%m-%d") user-config)
-      (load-file user-config)))
+  (ecfw-load-file "emacs-config.el")
+  (ecfw-load-file (concat (ecfw--platform) ".el"))
+  (ecfw-load-file (concat (system-name) ".el"))
+  (ecfw-load-file (concat (user-login-name) ".el"))
+
+  ;; Run deferred code
+  (run-hooks 'ecfw--deferral-hook)
+
+  ;; Run scratch buffer
+  (ecfw-load-file "scratch.el")
 #+end_src
 
 * Appendix 1: Proxy configuration functions
 
-The framework provides some functionality for automatically assessing which proxy it is behind and configuring accordingly.
+This Appendix is vestigial; the code here is flagged to either be converted to a package or removed. It provides some functionality for automatically assessing which proxy it is behind and configuring accordingly.
 
 ** Header
 
