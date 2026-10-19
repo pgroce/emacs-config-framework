@@ -119,6 +119,7 @@ With the addition of =early-init.el= we have the opportunity to set some things 
 We disable native compilation because of a bug in gcc that is unlikely to be fixed in [[https://brew.sh][Homebrew]].
 
 #+BEGIN_SRC emacs-lisp :tangle early-init.el
+  ;; -*- lexical-binding: t; -*-
   (setq native-comp-deferred-compilation nil)
 #+END_SRC
 
@@ -241,6 +242,7 @@ The =early-init.el= for the user configuration directory will install into the d
 The =config/early-init.el= and =config/init.el= files have a similar structure, as laid out above. Users are encouraged to favor the regular configuration files over the =early-= ones when possible, but they are there if necessary.
 
 #+begin_src emacs-lisp :tangle (prog1 "config/early-init.el" (make-directory "config" "."))
+  ;; -*- lexical-binding: t; -*-
   ;;; Load platform configuration files.
   (ecfw-load-file "early-emacs-config.el")
   (ecfw-load-file (concat "early-" (ecfw--platform) ".el"))
@@ -254,6 +256,7 @@ The =config/early-init.el= and =config/init.el= files have a similar structure, 
 With most everything defined in =early-init.el=, =init.el= simply hands off control to the =init.el= in =ecfw-config-dir=.
 
 #+BEGIN_SRC emacs-lisp :tangle init.el
+  ;; -*- lexical-binding: t; -*-
   (ecfw-load-file "init.el")
 #+END_SRC
 
@@ -262,6 +265,7 @@ With most everything defined in =early-init.el=, =init.el= simply hands off cont
 The remainder of this configuration is put in the default location, =~/.emacs.d/config/=. If you want to reuse this framework in other configurations, you can copy it from there before customizing the default configuration. (Alternately, you can copy =config= somewhere else and use =EMACS_CONFIG_DIR= to make /that/ your default configuration.)
 
 #+BEGIN_SRC emacs-lisp :tangle (prog1 "config/init.el" (make-directory "config" "."))
+  ;; -*- lexical-binding: t; -*-
   (eval-when-compile (require 'subr-x))
 
   ;;; Load platform configuration files.
@@ -284,6 +288,7 @@ This Appendix is vestigial; the code here is flagged to either be converted to a
 ** Header
 
 #+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
+  ;; -*- lexical-binding: t; -*-
   ;;; ecfw-proxy.el --- Proxy autoconfiguration
 
   ;; Copyright (C) 2017 Phil Groce
