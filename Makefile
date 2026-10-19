@@ -42,11 +42,13 @@ install-base: tangle
 
 install: tangle
 	@echo ""
+	@echo "-----------------------------------------------------------"
 	@echo "'make install' will:"
 	@echo "- Create  $(EMACS_HOME)/init.el if it does not exist"
 	@echo "- Create  $(EMACS_HOME)/early-init.el if it does not exist"
 	@echo "- Create  $(EMACS_HOME)/config if it does not exist"
 	@echo "- REPLACE $(EMACS_HOME)/config_default"
+	@echo "-----------------------------------------------------------"
 	@echo ""
 	install -b build/init.el $(EMACS_HOME)/
 	install -b build/early-init.el $(EMACS_HOME)/
@@ -58,17 +60,23 @@ install: tangle
 
 update: tangle
 	@echo ""
+	@echo "-----------------------------------------------------------"
 	@echo "'make update' will:"
 	@echo "REPLACE $(EMACS_HOME)/init.el"
 	@echo "REPLACE $(EMACS_HOME)/early-init.el"
 	@echo "REPLACE $(EMACS_HOME)/config/init.el"
 	@echo "REPLACE $(EMACS_HOME)/config/early-init.el"
 	@echo "Replace $(EMACS_HOME)/config_default"
-	@echo "- Copy all other ECFW files over destructively"
+	@echo "Leave   $(EMACS_HOME)/config/scratch.el alone"
+	@echo "-----------------------------------------------------------"
 	@echo ""
 	cp build/init.el $(EMACS_HOME)/
 	cp build/early-init.el $(EMACS_HOME)/
 	mkdir -p $(EMACS_HOME)/config
-	cp -rf build/config/* $(EMACS_HOME)/config/
+	cp -f build/config/init.el $(EMACS_HOME)/config/
+	cp -f build/config/early-init.el $(EMACS_HOME)/config/
+	if [ ! -e $(EMACS_HOME)/config/scratch.el ]; then \
+		cp -f build/config/scratch.el $(EMACS_HOME)/config/; \
+	fi
 	rm -rf $(EMACS_HOME)/config_default
 	cp -rf build/config $(EMACS_HOME)/config_default
