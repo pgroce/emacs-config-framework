@@ -23,9 +23,9 @@ Configuration files are stored in a subdirectory in =.emacs.d=. The examples bel
 
 Files are run in the following order:
 
-- =~/.emacs.d/config/emacs-early.el= (called by =init-early.el=)
-- =~/.emacs.d/config/emacs-config.el=
-- =~/.emacs.d/config/darwin.el= (for MacOS. =gnu_linux.el= for Linux or LSFW, =windows.el= for Windows. See also: [[*Platform-specific configuration][Platform-specific configuration]].)
+- =~/.emacs.d/config/early-emacs-config.el= (called by =config/early-init.el=)
+- =~/.emacs.d/config/emacs-config.el (called by =config/init.el=)
+- =~/.emacs.d/config/darwin.el= for MacOS. (=gnu_linux.el= for Linux or LSFW, =windows.el= for Windows. See also: [[*Platform-specific configuration][Platform-specific configuration]].)
 - =~/.emacs.d/config/<hostname>.el= (See also: [[*Platform-, host-, and user-specific configuration][Platform-, host-, and user-specific configuration]].)
 - =~/.emacs.d/config/pgroce.el= (if your username is =pgroce=. Read  [[*Platform-, host-, and user-specific configuration][Platform-, host-, and user-specific configuration]].)
 - =~/.emacs.d/config/scratch.el= (Read [[*The scratch file][The scratch file]].)
@@ -92,14 +92,6 @@ This configuration replaces the =\*scratch\*= buffer with a file, =scratch.el=.[
 
 =scratch.el= runs after /everything/, even terminal configuration. Therefore, you can try things out in the =scratch.el= with =eval-last-sexp= and know that it will run that way when you restart Emacs. (Notwithstanding anything else you've =eval-last-sexp='ed.)
 
-** Bonus: Proxy configuration
-
-This framework provides some functions to deal with a very specific, but irritating problem: Initializing a package-heavy Emacs configuration on a machine that may be behind one of a few proxies (or unproxied). Emacs often needs to know this before it can load packages successfully.
-
-Use of this code is optional, so if you don't have this problem, it will stay out of your way.
-
-The code for proxy autoconfiguration is at the end of this document, in [[Appendix 1: Proxy configuration functions]]. It is output in a separate file, =ecfw-proxy.el=.
-
 * Environment variables
 
 This configuration permits the use of a few environment variables to change its behavior.
@@ -110,21 +102,25 @@ Controls which configuration (or sub-configuration, if you prefer) Emacs will us
 
 If this variable is not defined, Emacs will look for a configuration in =~/.emacs.d/config=.
 
-* Code
+* Early initialization
+
+** =early-init.el=
+:PROPERTIES:
+:header-args: :tangle (prog1 "build/early-init.el" (make-directory "build" t))
+:END:
 
 With the addition of =early-init.el= we have the opportunity to set some things up very early.
 
-** Boilerplate
+*** Boilerplate
 
 We disable native compilation because of a bug in gcc that is unlikely to be fixed in [[https://brew.sh][Homebrew]].
 
-#+BEGIN_SRC emacs-lisp :tangle early-init.el
+#+BEGIN_SRC emacs-lisp
   ;; -*- lexical-binding: t; -*-
   (setq native-comp-deferred-compilation nil)
 #+END_SRC
 
-
-** Early initialization
+*** Early initialization
 In =early-init.el= we define the core ECFW functionality so it is available to the user as soon as possible. All of these functions are self-contained, use only core Emacs libraries, and do not do anything with the GUI or packaging, so they are safe to run here.
 
 - =ecfw-config-dir= is the path to the directory containing the Emacs configuration. =ecfw-root= is a macro to shorten the process of defining a file location relative to =ecfw-config-dir=. (The name is purposely short so it can be inlined easily.)
@@ -135,7 +131,7 @@ In =early-init.el= we define the core ECFW functionality so it is available to t
 
 - =ecfw-defer= is used to defer the execution of code until after all the configuration files have run, but before the code in =scratch.el=. =scratch.el= always runs last. This is done because =scratch.el= is conceptually the most local and specific place to put configuration; as such, I think it makes sense to give it the last word, so to speak. If you find this limitation unacceptable, then define a hook in =config/early-config.el= to store deferred code in, and run it as the last line in =scratch.el=.
 
-#+BEGIN_SRC emacs-lisp :tangle early-init.el
+#+BEGIN_SRC emacs-lisp
   ;; Rooting file names to the configuration directory
   (defconst ecfw-config-dir
     (expand-file-name (or (getenv "EMACS_CONFIG_DIR") "config")
@@ -152,18 +148,22 @@ In =early-init.el= we define the core ECFW functionality so it is available to t
       `(message ,fmt-str ,(format-time-string "%Y-%m-%d") ,@vars)))
 
   (defmacro ecfw--log-load (to-load)
-    `(ecfw--log "Loading '%s'" ,to-load))
+    (let ((-to-load (gensym)))
+      `(let ((,-to-load ,to-load))
+         (ecfw--log "Loading '%s'" ,-to-load))))
 
   (defmacro ecfw-load-file (to-load)
     "Load TO-LOAD from the the directory in `ecfw-config-dir'."
-    (let ((expanded (expand-file-name to-load ecfw-config-dir)))
-      `(if (file-readable-p ,expanded)
+    (let ((expanded (gensym)))
+      `(let ((,expanded (expand-file-name ,to-load ecfw-config-dir)))
+         (if (file-readable-p ,expanded)
+             (progn
+               (ecfw--log-load ,expanded)
+               (load-file ,expanded))
            (progn
-             (ecfw--log-load ,expanded)
-             (load-file ,expanded))
-         (progn
-           (ecfw--log "'%s' not found, skipped loading" ,expanded)
-           nil))))
+             (ecfw--log "'%s' not found, skipped loading" ,expanded)
+             nil)))))
+
 
   ;; Platform munging
   (defmacro ecfw--platform ()
@@ -187,7 +187,7 @@ In =early-init.el= we define the core ECFW functionality so it is available to t
 
 #+END_SRC
 
-** Sandboxing
+*** Sandboxing
 
 Set the following variables to contain them within =ecfw-config-dir=. (Individual configurations can, of course, set it to whatever they please.)
 
@@ -203,7 +203,7 @@ TODO: This list is surely outdated and needs to reflect changes made since when 
 - The savehist file
 - =gnus= stuff. Note that if you actually use =.newsrc= with other newsreaders (in anno domini 2017 or later) you may want to reset this.
 
-#+begin_src emacs-lisp :tangle early-init.el
+#+begin_src emacs-lisp
   ;; Contain state within config directory
   (setq bookmark-default-file (ecfw-root "bookmarks")
         nsm-settings-file (ecfw-root "network-security.data")
@@ -227,21 +227,25 @@ TODO: This list is surely outdated and needs to reflect changes made since when 
         elpy-rpc-virtualenv-path (ecfw-root "elpy"))
 #+end_src
 
-** Custom early initialization
+*** Custom early initialization
 
 Finally, we hand control off to the =early-init.el= file in =ecfw-config-dir=.
 
-#+begin_src emacs-lisp :tangle early-init.el
+#+begin_src emacs-lisp
   (ecfw-load-file "early-init.el")
 #+end_src
 
-* Default early configuration
 
-The =early-init.el= for the user configuration directory will install into the default location, =~/.emacs.d/config/=. If you want to reuse this framework in other configurations, you can copy it from there before customizing the default configuration. Alternately, you can copy =config= somewhere else and use =EMACS_CONFIG_DIR= to make /that/ your default configuration.
+** =config/early-init.el=
+:PROPERTIES:
+:header-args: :tangle (prog1 "build/config/early-init.el" (make-directory "build/config" t))
+:END:
+
+The =early-init.el= in the user configuration directory will install into the default location, =~/.emacs.d/config/=. If you want to reuse this framework in other configurations, you can copy it from there before customizing the default configuration. Alternately, you can copy =config= somewhere else and use =EMACS_CONFIG_DIR= to make /that/ your default configuration.
 
 The =config/early-init.el= and =config/init.el= files have a similar structure, as laid out above. Users are encouraged to favor the regular configuration files over the =early-= ones when possible, but they are there if necessary.
 
-#+begin_src emacs-lisp :tangle (prog1 "config/early-init.el" (make-directory "config" "."))
+#+begin_src emacs-lisp
   ;; -*- lexical-binding: t; -*-
   ;;; Load platform configuration files.
   (ecfw-load-file "early-emacs-config.el")
@@ -251,20 +255,29 @@ The =config/early-init.el= and =config/init.el= files have a similar structure, 
 #+end_src
 
 
-* Main startup
+* Normal initialization
+
+** =init.el=
+:PROPERTIES:
+:header-args: :tangle (prog1 "build/init.el" (make-directory "build" t))
+:END:
 
 With most everything defined in =early-init.el=, =init.el= simply hands off control to the =init.el= in =ecfw-config-dir=.
 
-#+BEGIN_SRC emacs-lisp :tangle init.el
+#+BEGIN_SRC emacs-lisp
   ;; -*- lexical-binding: t; -*-
   (ecfw-load-file "init.el")
 #+END_SRC
 
 
-* Default Configuration
+** =config/init.el=
+:PROPERTIES:
+:header-args: :tangle (prog1 "build/config/init.el" (make-directory "build/config" t))
+:END:
+
 The remainder of this configuration is put in the default location, =~/.emacs.d/config/=. If you want to reuse this framework in other configurations, you can copy it from there before customizing the default configuration. (Alternately, you can copy =config= somewhere else and use =EMACS_CONFIG_DIR= to make /that/ your default configuration.)
 
-#+BEGIN_SRC emacs-lisp :tangle (prog1 "config/init.el" (make-directory "config" "."))
+#+BEGIN_SRC emacs-lisp "."))
   ;; -*- lexical-binding: t; -*-
   (eval-when-compile (require 'subr-x))
 
@@ -280,311 +293,3 @@ The remainder of this configuration is put in the default location, =~/.emacs.d/
   ;; Run scratch buffer
   (ecfw-load-file "scratch.el")
 #+end_src
-
-* Appendix 1: Proxy configuration functions
-
-This Appendix is vestigial; the code here is flagged to either be converted to a package or removed. It provides some functionality for automatically assessing which proxy it is behind and configuring accordingly.
-
-** Header
-
-#+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
-  ;; -*- lexical-binding: t; -*-
-  ;;; ecfw-proxy.el --- Proxy autoconfiguration
-
-  ;; Copyright (C) 2017 Phil Groce
-
-  ;; Author: Phil Groce <pgroce@gmail.com>
-  ;; Version: 0.1
-  ;; Keywords: network proxies
-#+END_SRC
-
-** Requires
-
-We require the =url= package.
-
-#+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
-  (require 'url)
-#+END_SRC
-
-** Code
-
-*** Core proxy detection
-
-The low-level interface to the proxy testing code. =ecfw-proxy-works-p= simply returns true if it can get to the requested URL via the requested proxy.
-
-#+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
-  (defun ecfw-proxy--works-p (proxy-services test-url)
-    (let* ((url-proxy-services proxy-services)
-           ;; url-retrieve (well, open-network-stream) will error if it
-           ;; can't find the proxy; this is the most likely outcome if
-           ;; we're not testing the right proxy
-           (buffer (condition-case nil
-                       (url-retrieve-synchronously test-url t)
-                     (error nil))))
-      (if buffer
-          (progn
-            (let (rc)
-              (with-current-buffer buffer
-                (goto-char (point-min))
-                (if (re-search-forward
-                     "^HTTP/[0-9]\\.[0-9] \\([0-9]\\{3\\}\\)"
-                     nil
-                     t)
-                    (let ((code (string-to-number (match-string 1))))
-                      (if (= 200 code)
-                          (setq rc t)
-                        (setq rc nil)))
-                  (setq rc  nil)))
-              rc))
-        nil)))
-
-  (defun ecfw-proxy-works-p (proxy test-url)
-    "Predicate for testing if a proxy is usable.
-
-  PROXY is a proxy entry formatted as a record in the
-  `url-proxy-services' list of proxies. In other words, this is a
-  cons cell of the form (\"service type\" . \"address:port\").
-
-  TEST-URL is a URL which should be accessible through the proxy if
-  it exists and is configured correctly."
-   (ecfw-proxy--works-p `(,proxy) test-url))
-#+END_SRC
-
-*** Setting the proxy
-
-Setting =url-proxy-services= gets us 80% of the way there, but for full compatibility, we need to add the traditional environment variables so any subprocesses we may call behave appropriately.
-
-#+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
-  (defun ecfw-proxy--set (url-proxy-services-list)
-    "Configures proxy settings based on URL-PROXY-ENTRY
-
-  URL-PROXY-ENTRY. is a list formatted as the value of
-  `url-proxy-services'."
-    (message "[ecfw] Setting proxy for '%s'" url-proxy-services-list)
-    (let ((envars nil))
-      ;; Make a list of the environment variables we want to set. (Don't
-      ;; set them as we go in case there's an error in input.)
-      (cl-dolist (proxy-rec url-proxy-services-list)
-        (cl-destructuring-bind (key . value)
-            proxy-rec
-          (when (not (stringp key))
-            (error "Format error in %s: First value (%s) not a string"
-                   proxy-rec key))
-          (when (not (stringp value))
-            (error "Format error in %s: Second value (%s) not a string"
-                   proxy-rec value))
-
-          (if (string= key "no_proxy")
-              (progn
-                (add-to-list 'envars `(,"no_proxy" ,value))
-                (add-to-list 'envars `(,"NO_PROXY" ,value)))
-            (progn
-              (add-to-list 'envars
-                           `(,(format "%s_proxy" (downcase key)) ,value))
-              (add-to-list 'envars
-                           `(,(format "%s_PROXY" (upcase key)) ,value))))))
-      ;; Set the envars and url-proxy-services
-      (cl-dolist (envar envars)
-        (cl-destructuring-bind (key value)
-            envar
-          (setenv key value)))
-      (setq url-proxy-services url-proxy-services-list)))
-
-  ;; TODO: This is clunky. Integrate with --set, by taking note of the
-  ;; envars that would have been set from the previously value of
-  ;; `url-proxy-services' and unset them.
-  (defun ecfw-proxy--unset ()
-    "Configure for use without any proxy."
-    (cl-dolist (svc '("http" "https" "ftp"))
-      (setenv (concat (downcase svc) "_proxy") "")
-      (setenv (concat (upcase svc)   "_PROXY") "")
-      (setq url-proxy-services nil)))
-#+END_SRC
-
-*** The proxy file
-
-Information about the various proxies that might be used are stored in
-a file. The user defines the location of this file.
-
-A proxy file looks like this:
-
-#+BEGIN_SRC emacs-lisp :tangle no
-  ((uni ".example.edu,.example-institute.org"
-        (("http"
-          "proxy.example.edu:8080"
-          ("http://www.google.com/index.html"))
-         ("https"
-          "proxy.example.edu:8080"
-          ("https://www.google.com/index.html"))))
-   (work ".internal.megacorp.com"
-         (("https"
-           "proxy.megacorp.com:1234"
-           ("http://www.google.com/index.html"))
-          ("https"
-           "proxy.megacorp.com:1234"
-           ("https://code.internal.megacorp.com/index.html")))))
-#+END_SRC
-
-As you can see, it's just a single lisp data structure. Each element in the list is a /proxy group/, which can be thought of as a discrete network location with several different services potentially proxied.
-
-Each proxy group has the following records:
-
- * A label. This is a symbol, and can be used as a name to manually select proxies with =ecfw-proxy-select=.
- * What not to proxy, expressed in the format of a =NO_PROXY= environment variable. If every domain should be proxied, this can be =nil=.
- * A list of /proxies/. Each element in the proxy list should contain the following elements:
-   + The service being proxied, as a string. (This is the first element of a =url-proxy-services= entry.)
-   + The proxy to use. (This is the second element of a =url-proxy-services= entry.)
-   + A list of /test URLs/. =ecfw-proxy-autoconf= uses these to test whether it can connect through the proxy.
-
-Although the example only shows HTTP and HTTPS, it's possible to put any proxied services in that =url-proxy-services= can handle and =url-retrieve= can open. (Note that =ecfw-proxy= won't notice if you use test URLs from one service in an entry for another service, so don't do that.)
-
-#+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
-  (defun ecfw-proxy--read-file (filename)
-    (with-temp-buffer
-    (insert-file-contents filename)
-    (goto-char (point-min))
-    (read (current-buffer))))
-
-  (defcustom ecfw-proxy-file nil
-    "Full path to the file containing proxy information for
-    `ecfw-proxy-autoconf' and `ecfw-switch-proxy'.
-  The format of PROXIES-FILE-NAME is an sexpr list of records. An example might look like this:
-
-    ((uni \".example.edu,.example-institute.org\"
-          ((\"http\"
-            \"proxy.example.edu:8080\"
-            (\"http://www.google.com/index.html\"))
-           (\"https\"
-            \"proxy.example.edu:8080\"
-            (\"https://www.google.com/index.html\"))))
-     (work \".internal.megacorp.com\"
-           ((\"https\"
-             \"proxy.megacorp.com:1234\"
-             (\"http://www.google.com/index.html\"))
-            (\"https\"
-             \"proxy.megacorp.com:1234\"
-             (\"https://code.internal.megacorp.com/index.html\")))))
-
-   Each record consists of the following fields:
-
-    (label service proxy-addr no-proxy test-urls)
-
-  The label is a symbol or string that you can use to identify the
-  record quickly; it is ignored by the code.
-
-  The service is one of the proxy services: \"http\", \"https\",
-  \"ftp\", etc.
-
-  The no-proxy string has the same format as the NO_PROXY
-  environment variable, and specifies domains that should not be
-  proxied. It is also not used in the code, but is passed into
-  `url-proxy-services' unchanged.
-
-  The test-urls are a set of URLs that should be reachable if this
-  proxy is usable. If they are not reachable with the proxy
-  configured, the proxy will not be used. If the list of test-urls
-  is empty the proxy will never be used.
-
-  Note that no entries need to be configured for an unproxied network
-  connection; if none of the proxies are reachable Emacs will be
-  configured not to use a proxy. If a proxy is reachable but you do
-  not wish to use it, you should remove it from your proxies file.")
-#+END_SRC
-
-*** Autoconfiguration
-
-Autoconfiguration is mainly here to be called non-interactively at the beginning of an Emacs configuration, but it seems like it would be useful to call when changing network environments, so it's also an interactive command.
-
-#+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
-  (defun ecfw-proxy--autoconf (proxies-raw)
-    (let ((final-proxies nil))
-      (cl-dolist (proxy-group proxies-raw)
-        (cl-destructuring-bind (label no-proxy proxies) proxy-group
-          (cl-dolist (proxy-rec proxies)
-            (cl-destructuring-bind (service addr test-urls) proxy-rec
-              (let* ((service-rec `(,service . ,addr))
-                     (proxy-works-p (lambda (test-url)
-                                      (ecfw-proxy-works-p service-rec test-url))))
-                (when (and (not (eq test-urls nil))
-                           (cl-every proxy-works-p test-urls))
-                  (add-to-list 'final-proxies service-rec)))))
-          (when (< 0 (length final-proxies))
-            ;; This proxy group appears to have connected. Add no_proxy
-            ;; if necessary and break out.
-            (when no-proxy
-              (add-to-list 'final-proxies `("no_proxy" . ,no-proxy)))
-            (cl-return))))
-      final-proxies))
-
-
-
-  (defun ecfw-proxy-autoconf (&optional proxies-file-name)
-    "Autoconfigure Emacs to use any usable proxies.
-
-  PROXIES-FILE-NAME is the name of the file containing proxy
-  configuration information. If it is not supplied, the value of
-  `ecfw-proxy-file' will be used. (For the format of
-  PROXIES-FILE-NAME, see the documentation for `ecfw-proxy-file'.)
-
-  If called interactively, this command ignores its prefix argument
-  and uses `ecfw-proxy-file' for its proxies. If that variable is
-  not configured or points to a non-existant file, this command has
-  no effect."
-    (interactive)
-    (let ((proxies-file-name (if (stringp proxies-file-name)
-                                 proxies-file-name
-                               ecfw-proxy-file)))
-      (if (and proxies-file-name
-               (file-exists-p proxies-file-name))
-          (progn
-            (ecfw-proxy--set
-             (ecfw-proxy--autoconf
-              (ecfw-proxy--read-file proxies-file-name))))
-        (message "[ecfw] No proxy file, not configuring proxies"))))
-#+END_SRC
-
-*** Proxy selection
-
-It's sometimes nice to manually set the proxy, as when troubleshooting. If the proxy is listed in the proxies file, =ecfw-proxy-set= simplifies this somewhat.
-
-#+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
-  (defun ecfw-proxy-switch (&optional proxy-file-name)
-    "Convert PROXY-FILE-NAME into a list of proxy options.
-
-  If PROXY-FILE-NAME is not supplied, use the value of `ecfw-proxy-file'."
-    (let ((proxy-file-name (if proxy-file-name
-                               proxy-file-name
-                             ecfw-proxy-file)))
-      (if proxy-file-name
-          (progn
-            (let* ((proxies-raw (ecfw-proxy--read-file proxy-file-name))
-                   (proxy-group
-                    (assoc
-                     (intern (completing-read "Which proxy? " proxies-raw))
-                     proxies-raw)))
-              (cl-destructuring-bind (label no-proxy proxies) proxy-group
-                (let ((vals nil))
-                  (cl-dolist (proxy proxies)
-                    (cl-destructuring-bind (service addr tests) proxy
-                      (add-to-list 'vals `(,service . ,addr))))
-                  (when no-proxy
-                    (add-to-list 'vals `("no_proxy" . ,no-proxy)))
-                  (ecfw-proxy--set vals)))))
-        (progn
-          (message "Configure proxy file in ecfw-proxy-file to switch proxies.")
-          nil))))
-
-  (defun ecfw-proxy-select (&optional arg)
-    "Select a proxy from the list of proxies in `ecfw-proxy-file'.
-  If ARG is non-nil, configure for use without a proxy."
-    (interactive "P")
-    (if arg
-        (ecfw-proxy--unset)
-      (ecfw-proxy-switch)))
-#+END_SRC
-** Provides
-
-#+BEGIN_SRC emacs-lisp :tangle ecfw-proxy.el
-  (provide 'ecfw-proxy)
-  ;;; ecfw-proxy.el ends here
-#+END_SRC

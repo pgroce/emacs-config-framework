@@ -12,7 +12,7 @@ PANDOC=`which pandoc`
 endif
 
 
-EMACS_HOME=$(shell $(EMACS) --batch --eval "(princ user-emacs-directory)")
+EMACS_HOME=$(shell $(EMACS) --batch --eval "(princ (directory-file-name user-emacs-directory))")
 
 all: tangle README.md
 
@@ -20,13 +20,13 @@ tangle:
 	rm -rf build && \
 	mkdir -p build && \
 	$(EMACS) --batch \
-	--visit=emacs-config-framework.org \
-	--eval "(progn (require 'ob) (cd \"build\") (org-babel-tangle nil))"
+	  --visit=emacs-config-framework.org \
+	  --eval "(org-babel-tangle nil)"
 	touch build/config/scratch.el
 
 README.md: emacs-config-framework.org
 	$(PANDOC) -i emacs-config-framework.org \
-	          -o README.md \
+	          -o build/README.md \
 	          -w gfm
 
 
@@ -43,13 +43,13 @@ install-base: tangle
 install: tangle
 	@echo ""
 	@echo "'make install' will:"
-	@echo "- Non-destructively replace $(EMACS_HOME)/init.el"
-	@echo "- Not change $(EMACS_HOME)/config if it exists"
-	@echo "- Install/replace $(EMACS_HOME)/config_default"
-	@echo "- Copy all other ECFW files over destructively"
+	@echo "- Create  $(EMACS_HOME)/init.el if it does not exist"
+	@echo "- Create  $(EMACS_HOME)/early-init.el if it does not exist"
+	@echo "- Create  $(EMACS_HOME)/config if it does not exist"
+	@echo "- REPLACE $(EMACS_HOME)/config_default"
 	@echo ""
 	install -b build/init.el $(EMACS_HOME)/
-	cp -f build/ecfw-proxy.el $(EMACS_HOME)/
+	install -b build/early-init.el $(EMACS_HOME)/
 	if [ ! -e $(EMACS_HOME)/config ]; then \
 	    cp -rf build/config $(EMACS_HOME); \
 	fi
@@ -60,13 +60,15 @@ update: tangle
 	@echo ""
 	@echo "'make update' will:"
 	@echo "REPLACE $(EMACS_HOME)/init.el"
-	@echo "REPLACE $(EMACS_HOME)/config/init.el if it exists"
+	@echo "REPLACE $(EMACS_HOME)/early-init.el"
+	@echo "REPLACE $(EMACS_HOME)/config/init.el"
+	@echo "REPLACE $(EMACS_HOME)/config/early-init.el"
 	@echo "Replace $(EMACS_HOME)/config_default"
 	@echo "- Copy all other ECFW files over destructively"
 	@echo ""
-	install build/init.el $(EMACS_HOME)/
-	cp -f build/ecfw-proxy.el $(EMACS_HOME)/
+	cp build/init.el $(EMACS_HOME)/
+	cp build/early-init.el $(EMACS_HOME)/
 	mkdir -p $(EMACS_HOME)/config
-	cp -f build/config/init.el $(EMACS_HOME)/config/
+	cp -rf build/config/* $(EMACS_HOME)/config/
 	rm -rf $(EMACS_HOME)/config_default
 	cp -rf build/config $(EMACS_HOME)/config_default
