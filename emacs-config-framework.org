@@ -21,14 +21,18 @@ $ make install
 
 Configuration files are stored in a subdirectory in =.emacs.d=. The examples below use =config=, which is the default. If you want use a subdirectory with a different name, define it in the environment variable =EMACS_CONFIG_DIR=. (The folder must live in =~/emacs.d=.)
 
-Files are run in the following order:
+Files, if they exist, are run in the following order:
 
-- =~/.emacs.d/config/early-emacs-config.el= (called by =config/early-init.el=)
-- =~/.emacs.d/config/emacs-config.el (called by =config/init.el=)
-- =~/.emacs.d/config/darwin.el= for MacOS. (=gnu_linux.el= for Linux or LSFW, =windows.el= for Windows. See also: [[*Platform-specific configuration][Platform-specific configuration]].)
-- =~/.emacs.d/config/<hostname>.el= (See also: [[*Platform-, host-, and user-specific configuration][Platform-, host-, and user-specific configuration]].)
-- =~/.emacs.d/config/pgroce.el= (if your username is =pgroce=. Read  [[*Platform-, host-, and user-specific configuration][Platform-, host-, and user-specific configuration]].)
-- =~/.emacs.d/config/scratch.el= (Read [[*The scratch file][The scratch file]].)
+- In the early initialization phase (i.e., before GUI and packaging has been setuip)
+  - =~/.emacs.d/config/early-emacs-config.el= (called by =config/early-init.el=)
+  - =~/.emacs.d/config/early-darwin.el= (=early-gnu_linux.el= for Linux or LSFW, =early-indows.el= for Windows. See also: [[*Platform-specific configuration][Platform-specific configuration]].)
+  - =~/.emacs.d/config/early-<hostname>.el=  (See also: [[*Platform-, host-, and user-specific configuration][Platform-, host-, and user-specific configuration]].)
+- In normal initialization (i.e., after GUI/package setup)
+  - =~/.emacs.d/config/emacs-config.el (called by =config/init.el=)
+  - =~/.emacs.d/config/darwin.el= (Again, for MacOS.)
+  - =~/.emacs.d/config/<hostname>.el= (See also: [[*Platform-, host-, and user-specific configuration][Platform-, host-, and user-specific configuration]].)
+  - =~/.emacs.d/config/pgroce.el= (if your username is =pgroce=. Read  [[*Platform-, host-, and user-specific configuration][Platform-, host-, and user-specific configuration]].)
+  - =~/.emacs.d/config/scratch.el= (Read [[*The scratch file][The scratch file]].)
 
 * Installation
 
